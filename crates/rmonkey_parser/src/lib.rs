@@ -1,4 +1,4 @@
-use rmonkey_ast::{Expr, LetStmt, Program, Stmt};
+use rmonkey_ast::{Expr, LetStmt, Program, ReturnStmt, Stmt};
 use rmonkey_error::{RMonkeyError, Result};
 use rmonkey_lexer::Lexer;
 use rmonkey_token::Token;
@@ -61,6 +61,7 @@ impl<'a> Parser<'a> {
     fn parse_stmt(&mut self) -> Result<Stmt> {
         match self.cur_token {
             Token::Let => Ok(self.parse_let_stmt()?),
+            Token::Return => Ok(self.parse_return_stmt()?),
             _ => unimplemented!(),
         }
     }
@@ -83,7 +84,38 @@ impl<'a> Parser<'a> {
             value: Expr::Ident("empty".to_owned()),
         }))
     }
+
+    fn parse_return_stmt(&mut self) -> Result<Stmt> {
+        // consume `return keyword`
+        self.next_token();
+
+        while !self.cur_token_is(Token::Semicolon) {
+            self.next_token();
+        }
+        Ok(Stmt::ReturnStmt(ReturnStmt {
+            value: Expr::Ident("empty".to_owned()),
+        }))
+    }
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use rmonkey_lexer::Lexer;
+
+    use crate::Parser;
+
+    #[test]
+    fn test_return_stmt() {
+        let input = r#"
+        return 5;
+        return 10;
+        return 993322;
+        "#;
+
+        let mut l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program().unwrap();
+
+        assert_eq!(program.stmts.len(), 3);
+    }
+}
