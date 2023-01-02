@@ -5,3 +5,18 @@ version = 3
 [[package]]
 name = "rmonkey"
 version = "0.1.0"
+dependencies = [
+ "rmonkey_lexer",
+ "rmonkey_token",
+]
+
+[[package]]
+name = "rmonkey_lexer"
+version = "0.1.0"
+dependencies = [
+ "rmonkey_token",
+]
+
+[[package]]
+name = "rmonkey_token"
+version = "0.1.0"
