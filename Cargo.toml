@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 rmonkey_token = {path = "./crates/rmonkey_token/"}
 rmonkey_lexer = {path = "./crates/rmonkey_lexer/"}
+rmonkey_parser = {path = "./crates/rmonkey_parser/"}
 

@@ -82,13 +82,27 @@ name = "rmonkey"
 version = "0.1.0"
 dependencies = [
  "rmonkey_lexer",
+ "rmonkey_parser",
  "rmonkey_token",
 ]
+
+[[package]]
+name = "rmonkey_ast"
+version = "0.1.0"
 
 [[package]]
 name = "rmonkey_lexer"
 version = "0.1.0"
 dependencies = [
+ "rmonkey_token",
+]
+
+[[package]]
+name = "rmonkey_parser"
+version = "0.1.0"
+dependencies = [
+ "rmonkey_ast",
+ "rmonkey_lexer",
  "rmonkey_token",
 ]
 
