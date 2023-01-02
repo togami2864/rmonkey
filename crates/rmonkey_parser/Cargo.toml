@@ -9,3 +9,4 @@ edition = "2021"
 rmonkey_token = {path = "../rmonkey_token"}
 rmonkey_ast = {path = "../rmonkey_ast"}
 rmonkey_lexer = {path = "../rmonkey_lexer"}
+rmonkey_error = {path = "../rmonkey_error"}

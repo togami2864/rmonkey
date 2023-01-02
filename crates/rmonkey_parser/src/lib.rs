@@ -1,4 +1,5 @@
 use rmonkey_ast::{Expr, LetStmt, Program, Stmt};
+use rmonkey_error::{RMonkeyError, Result};
 use rmonkey_lexer::Lexer;
 use rmonkey_token::Token;
 
@@ -48,29 +49,29 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_program(&mut self) -> Result<Program, ()> {
+    fn parse_program(&mut self) -> Result<Program> {
         let mut stmts: Vec<Stmt> = vec![];
         while self.cur_token != Token::Eof {
-            stmts.push(self.parse_stmt().unwrap());
+            stmts.push(self.parse_stmt()?);
             self.next_token();
         }
         Ok(Program::new(stmts))
     }
 
-    fn parse_stmt(&mut self) -> Result<Stmt, ()> {
+    fn parse_stmt(&mut self) -> Result<Stmt> {
         match self.cur_token {
-            Token::Let => Ok(self.parse_let_stmt().unwrap()),
+            Token::Let => Ok(self.parse_let_stmt()?),
             _ => unimplemented!(),
         }
     }
 
-    fn parse_let_stmt(&mut self) -> Result<Stmt, ()> {
+    fn parse_let_stmt(&mut self) -> Result<Stmt> {
         let ident = match self.next_token() {
             Token::Ident(val) => val,
-            _ => todo!(),
+            _ => return Err(RMonkeyError::UnexpectedTokenError),
         };
         if self.expect_peek(Token::Assign) {
-            todo!()
+            return Err(RMonkeyError::UnexpectedTokenError);
         }
 
         while !self.cur_token_is(Token::Semicolon) {
