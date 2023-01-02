@@ -9,6 +9,9 @@ pub enum Token {
     Int(u64),
     Assign,
     Plus,
+    Minus,
+    Asterisk,
+    Slash,
     Comma,
     Semicolon,
     LParen,
@@ -17,6 +20,16 @@ pub enum Token {
     RBrace,
     Function,
     Let,
+    Bang,
+    Lt,
+    Gt,
+    True,
+    False,
+    If,
+    Else,
+    Return,
+    Eq,
+    NotEq,
 }
 
 impl fmt::Display for Token {
@@ -36,6 +49,19 @@ impl fmt::Display for Token {
             Token::RBrace => write!(f, "}}"),
             Token::Function => write!(f, "fn"),
             Token::Let => write!(f, "let"),
+            Token::Minus => write!(f, "-"),
+            Token::Asterisk => write!(f, "*"),
+            Token::Slash => write!(f, "/"),
+            Token::Bang => write!(f, "!"),
+            Token::Lt => write!(f, "<"),
+            Token::Gt => write!(f, ">"),
+            Token::True => write!(f, "true"),
+            Token::False => write!(f, "false"),
+            Token::If => write!(f, "if"),
+            Token::Else => write!(f, "else"),
+            Token::Return => write!(f, "return"),
+            Token::Eq => write!(f, "=="),
+            Token::NotEq => write!(f, "!="),
         }
     }
 }
@@ -43,6 +69,11 @@ impl fmt::Display for Token {
 static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
     "let" => Token::Let,
     "fn" => Token::Function,
+    "true" => Token::True,
+    "false" => Token::False,
+    "if" => Token::If,
+    "else" => Token::Else,
+    "return" => Token::Return
 };
 
 pub fn look_up_ident(ident: &str) -> Option<Token> {

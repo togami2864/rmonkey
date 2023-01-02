@@ -33,12 +33,32 @@ impl<'a> Lexer<'a> {
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
         let token = match self.cur {
-            '=' => Token::Assign,
+            '=' => {
+                if self.peek == '=' {
+                    self.read_char();
+                    return Token::Eq;
+                } else {
+                    Token::Assign
+                }
+            }
             ';' => Token::Semicolon,
             '(' => Token::LParen,
             ')' => Token::RParen,
             ',' => Token::Comma,
             '+' => Token::Plus,
+            '-' => Token::Minus,
+            '*' => Token::Asterisk,
+            '/' => Token::Slash,
+            '!' => {
+                if self.peek == '=' {
+                    self.read_char();
+                    return Token::NotEq;
+                } else {
+                    Token::Bang
+                }
+            }
+            '>' => Token::Gt,
+            '<' => Token::Lt,
             '{' => Token::LBrace,
             '}' => Token::RBrace,
             '\u{0}' => Token::Eof,
@@ -170,6 +190,110 @@ mod tests {
             let token = l.next_token();
             if token != *exp {
                 dbg!(&token);
+                panic!(
+                    "assertion failed at {} => left: {}, right: {}",
+                    l.cur, token, exp
+                );
+            }
+            assert_eq!(token.to_string(), *exp_literal);
+        }
+    }
+    #[test]
+    fn test_op() {
+        let input = r#"
+!-/*5;
+5 < 10 > 5;
+        "#;
+
+        let tests = [
+            (Token::Bang, "!"),
+            (Token::Minus, "-"),
+            (Token::Slash, "/"),
+            (Token::Asterisk, "*"),
+            (Token::Int(5), "5"),
+            (Token::Semicolon, ";"),
+            (Token::Int(5), "5"),
+            (Token::Lt, "<"),
+            (Token::Int(10), "10"),
+            (Token::Gt, ">"),
+            (Token::Int(5), "5"),
+        ];
+
+        let mut l = Lexer::new(input);
+        for (exp, exp_literal) in tests.iter() {
+            let token = l.next_token();
+            if token != *exp {
+                panic!(
+                    "assertion failed at {} => left: {}, right: {}",
+                    l.cur, token, exp
+                );
+            }
+            assert_eq!(token.to_string(), *exp_literal);
+        }
+    }
+    #[test]
+    fn test_if_statement() {
+        let input = r#"if(5 < 10){
+            return true;
+        } else {
+            return false;
+        }"#;
+
+        let tests = [
+            (Token::If, "if"),
+            (Token::LParen, "("),
+            (Token::Int(5), "5"),
+            (Token::Lt, "<"),
+            (Token::Int(10), "10"),
+            (Token::LBrace, "{"),
+            (Token::Return, "return"),
+            (Token::True, "true"),
+            (Token::Semicolon, ";"),
+            (Token::RBrace, "}"),
+            (Token::Else, "else"),
+            (Token::LBrace, "{"),
+            (Token::Return, "return"),
+            (Token::False, "false"),
+            (Token::Semicolon, ";"),
+            (Token::RBrace, "}"),
+            (Token::Eof, ""),
+        ];
+
+        let mut l = Lexer::new(input);
+        for (exp, exp_literal) in tests.iter() {
+            let token = l.next_token();
+            if token != *exp {
+                panic!(
+                    "assertion failed at {} => left: {}, right: {}",
+                    l.cur, token, exp
+                );
+            }
+            assert_eq!(token.to_string(), *exp_literal);
+        }
+    }
+
+    #[test]
+    fn test_multiple() {
+        let input = r#"
+        10 == 10;
+        10 != 9;
+        "#;
+        let tests = [
+            (Token::Int(10), "10"),
+            (Token::Eq, "=="),
+            (Token::Int(10), "10"),
+            (Token::Semicolon, ";"),
+            (Token::Int(10), "10"),
+            (Token::NotEq, "!="),
+            (Token::Int(9), "9"),
+            (Token::Semicolon, ";"),
+            (Token::Eof, ""),
+        ];
+
+        let mut l = Lexer::new(input);
+        for (exp, exp_literal) in tests.iter() {
+            let token = l.next_token();
+            if token != *exp {
                 panic!(
                     "assertion failed at {} => left: {}, right: {}",
                     l.cur, token, exp
