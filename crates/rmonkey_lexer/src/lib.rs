@@ -1,6 +1,6 @@
 use std::str::Chars;
 
-use rmonkey_token::Token;
+use rmonkey_token::{look_up_ident, Token};
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
@@ -31,6 +31,7 @@ impl<'a> Lexer<'a> {
 
     /// return the current token and call `read_char()`
     pub fn next_token(&mut self) -> Token {
+        self.skip_whitespace();
         let token = match self.cur {
             '=' => Token::Assign,
             ';' => Token::Semicolon,
@@ -41,11 +42,49 @@ impl<'a> Lexer<'a> {
             '{' => Token::LBrace,
             '}' => Token::RBrace,
             '\u{0}' => Token::Eof,
-            _ => Token::Illegal,
+            c => {
+                if is_letter(c) {
+                    return self.read_identifier();
+                } else if c.is_ascii_digit() {
+                    return self.read_number();
+                } else {
+                    Token::Illegal
+                }
+            }
         };
         self.read_char();
         token
     }
+
+    fn skip_whitespace(&mut self) {
+        while self.cur.is_whitespace() || self.cur == '\n' || self.cur == '\t' || self.cur == '\r' {
+            self.read_char();
+        }
+    }
+
+    fn read_identifier(&mut self) -> Token {
+        let mut ident = String::new();
+        while is_letter(self.cur) {
+            ident.push(self.read_char());
+        }
+        if let Some(token) = look_up_ident(&ident) {
+            return token;
+        }
+        Token::Ident(ident)
+    }
+
+    fn read_number(&mut self) -> Token {
+        let mut value = String::new();
+        while self.cur.is_ascii_digit() {
+            value.push(self.read_char());
+        }
+        let value_u64 = value.parse::<u64>().unwrap();
+        Token::Int(value_u64)
+    }
+}
+
+fn is_letter(ch: char) -> bool {
+    ('a'..='z').contains(&ch) || ('A'..='Z').contains(&ch) || ch == '_'
 }
 
 #[cfg(test)]
@@ -73,6 +112,69 @@ mod tests {
         for (exp, exp_literal) in tests.iter() {
             let token = l.next_token();
             assert!(token.eq(exp));
+            assert_eq!(token.to_string(), *exp_literal);
+        }
+    }
+
+    #[test]
+    fn test_variable_binding() {
+        let input = r#"
+        let five = 5;
+        let ten = 10;
+        let add = fn(x, y){
+            x + y
+        };
+        let result = add(five, ten);"#;
+        let tests = [
+            (Token::Let, "let"),
+            (Token::Ident("five".to_string()), "five"),
+            (Token::Assign, "="),
+            (Token::Int(5), "5"),
+            (Token::Semicolon, ";"),
+            (Token::Let, "let"),
+            (Token::Ident("ten".to_string()), "ten"),
+            (Token::Assign, "="),
+            (Token::Int(10), "10"),
+            (Token::Semicolon, ";"),
+            (Token::Let, "let"),
+            (Token::Ident("add".to_string()), "add"),
+            (Token::Assign, "="),
+            (Token::Function, "fn"),
+            (Token::LParen, "("),
+            (Token::Ident("x".to_string()), "x"),
+            (Token::Comma, ","),
+            (Token::Ident("y".to_string()), "y"),
+            (Token::RParen, ")"),
+            (Token::LBrace, "{"),
+            (Token::Ident("x".to_string()), "x"),
+            (Token::Plus, "+"),
+            (Token::Ident("y".to_string()), "y"),
+            (Token::RBrace, "}"),
+            (Token::Semicolon, ";"),
+            (Token::Let, "let"),
+            (Token::Ident("result".to_string()), "result"),
+            (Token::Assign, "="),
+            (Token::Ident("add".to_string()), "add"),
+            (Token::LParen, "("),
+            (Token::Ident("five".to_string()), "five"),
+            (Token::Comma, ","),
+            (Token::Ident("ten".to_string()), "ten"),
+            (Token::RParen, ")"),
+            (Token::Semicolon, ";"),
+            (Token::Eof, "Eof"),
+        ];
+
+        let mut l = Lexer::new(input);
+
+        for (exp, exp_literal) in tests.iter() {
+            let token = l.next_token();
+            if token != *exp {
+                dbg!(&token);
+                panic!(
+                    "assertion failed at {} => left: {}, right: {}",
+                    l.cur, token, exp
+                );
+            }
             assert_eq!(token.to_string(), *exp_literal);
         }
     }
