@@ -21,6 +21,16 @@ impl<'a> Lexer<'a> {
         lexer
     }
 
+    pub fn tokenize(&mut self) {
+        loop {
+            let tok = self.next_token();
+            println!("token -> {}", tok);
+            if tok.eq(&Token::Eof) {
+                break;
+            }
+        }
+    }
+
     /// read next char of the input and return current char
     pub fn read_char(&mut self) -> char {
         let cur = self.cur;
