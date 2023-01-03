@@ -24,7 +24,7 @@ impl<'a> Lexer<'a> {
     pub fn tokenize(&mut self) {
         loop {
             let tok = self.next_token();
-            println!("token -> {}", tok);
+            println!("{} -> {}", tok.name(), tok);
             if tok.eq(&Token::Eof) {
                 break;
             }

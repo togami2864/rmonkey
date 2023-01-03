@@ -47,6 +47,38 @@ impl Token {
             _ => Precedence::Lowest,
         }
     }
+
+    pub fn name(&self) -> &str {
+        match self {
+            Token::Illegal => "Illegal",
+            Token::Eof => "Eof",
+            Token::Ident(_) => "Ident",
+            Token::Int(_) => "Int",
+            Token::Assign => "Assign",
+            Token::Plus => "Plus",
+            Token::Minus => "Minus",
+            Token::Asterisk => "Asterisk",
+            Token::Slash => "Slash",
+            Token::Comma => "Comma",
+            Token::Semicolon => "Semicolon",
+            Token::LParen => "LParen",
+            Token::RParen => "RParen",
+            Token::LBrace => "LBrace",
+            Token::RBrace => "RBrace",
+            Token::Function => "Function",
+            Token::Let => "Let",
+            Token::Bang => "Bang",
+            Token::Lt => "Lt",
+            Token::Gt => "Gt",
+            Token::True => "True",
+            Token::False => "False",
+            Token::If => "If",
+            Token::Else => "Else",
+            Token::Return => "Return",
+            Token::Eq => "Eq",
+            Token::NotEq => "NotEq",
+        }
+    }
 }
 
 impl fmt::Display for Token {
