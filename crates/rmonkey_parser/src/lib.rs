@@ -71,12 +71,22 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_let_stmt(&mut self) -> Result<Stmt> {
-        let ident = match self.next_token() {
-            Token::Ident(val) => val,
-            _ => return Err(RMonkeyError::UnexpectedTokenError),
+        // consume `let`
+        self.next_token();
+        let ident = match &self.cur_token {
+            Token::Ident(val) => val.to_owned(),
+            tok => {
+                return Err(RMonkeyError::UnexpectedToken {
+                    expected: Token::Ident("Ident".to_string()),
+                    got: tok.clone(),
+                });
+            }
         };
-        if self.expect_peek(Token::Assign) {
-            return Err(RMonkeyError::UnexpectedTokenError);
+        if !self.expect_peek(Token::Assign) {
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: Token::Assign,
+                got: self.peek_token.clone(),
+            });
         }
         // consume `=`
         self.next_token();
@@ -136,7 +146,9 @@ impl<'a> Parser<'a> {
             Token::If => self.parse_if_expr()?,
             Token::Function => self.parse_func_literal()?,
             _ => {
-                return Err(RMonkeyError::UnexpectedTokenError);
+                return Err(RMonkeyError::Custom(
+                    "failed to parse expression".to_string(),
+                ));
             }
         };
 
@@ -168,21 +180,30 @@ impl<'a> Parser<'a> {
         self.next_token();
         let expr = self.parse_expr(Precedence::Lowest);
         if !self.expect_peek(Token::RParen) {
-            return Err(RMonkeyError::UnexpectedTokenError);
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: Token::RParen,
+                got: self.peek_token.clone(),
+            });
         }
         expr
     }
 
     fn parse_if_expr(&mut self) -> Result<Expr> {
         if !self.expect_peek(Token::LParen) {
-            return Err(RMonkeyError::UnexpectedTokenError);
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: Token::LParen,
+                got: self.peek_token.clone(),
+            });
         };
         // consume `(`
         self.next_token();
 
         let condition = self.parse_expr(Precedence::Lowest)?;
         if !self.expect_peek(Token::RParen) {
-            return Err(RMonkeyError::UnexpectedTokenError);
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: Token::RParen,
+                got: self.peek_token.clone(),
+            });
         };
         // consume `{`
         self.next_token();
@@ -209,7 +230,10 @@ impl<'a> Parser<'a> {
 
     fn parse_func_literal(&mut self) -> Result<Expr> {
         if !self.expect_peek(Token::LParen) {
-            return Err(RMonkeyError::UnexpectedTokenError);
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: Token::LParen,
+                got: self.peek_token.clone(),
+            });
         }
 
         let params = self.parse_func_params()?;
@@ -232,7 +256,12 @@ impl<'a> Parser<'a> {
         let mut params: Vec<Expr> = Vec::new();
         let first_param = match &self.cur_token {
             Token::Ident(val) => Expr::Ident(val.to_owned()),
-            _ => return Err(RMonkeyError::UnexpectedTokenError),
+            _ => {
+                return Err(RMonkeyError::UnexpectedToken {
+                    expected: Token::Ident("Ident".to_string()),
+                    got: self.cur_token.clone(),
+                })
+            }
         };
         params.push(first_param);
 
@@ -243,12 +272,20 @@ impl<'a> Parser<'a> {
                 Token::Ident(val) => {
                     params.push(Expr::Ident(val.to_owned()));
                 }
-                _ => return Err(RMonkeyError::UnexpectedTokenError),
+                _ => {
+                    return Err(RMonkeyError::UnexpectedToken {
+                        expected: Token::Ident("Ident".to_string()),
+                        got: self.cur_token.clone(),
+                    })
+                }
             }
         }
 
         if !self.expect_peek(Token::RParen) {
-            return Err(RMonkeyError::UnexpectedTokenError);
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: Token::RParen,
+                got: self.peek_token.clone(),
+            });
         }
 
         Ok(Some(params))
@@ -282,7 +319,10 @@ impl<'a> Parser<'a> {
         }
 
         if !self.expect_peek(Token::RParen) {
-            return Err(RMonkeyError::UnexpectedTokenError);
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: Token::RParen,
+                got: self.peek_token.clone(),
+            });
         }
 
         Ok(Some(args))
@@ -292,7 +332,11 @@ impl<'a> Parser<'a> {
         let op = match self.cur_token {
             Token::Minus => Prefix::Minus,
             Token::Bang => Prefix::Bang,
-            _ => return Err(RMonkeyError::UnexpectedTokenError),
+            _ => {
+                return Err(RMonkeyError::InvalidPrefix {
+                    got: self.cur_token.clone(),
+                })
+            }
         };
 
         self.next_token();
@@ -313,7 +357,7 @@ impl<'a> Parser<'a> {
             Token::Minus => Infix::Minus,
             Token::Slash => Infix::Slash,
             Token::Asterisk => Infix::Asterisk,
-            _ => return Err(RMonkeyError::UnexpectedTokenError),
+            _ => return Err(RMonkeyError::Custom("invalid for infix".to_string())),
         };
 
         let precedence = self.cur_token.cur_precedence();
@@ -421,6 +465,7 @@ mod tests {
         fn(){1+1};
         fn() { return foobar + barfoo }
         fn() { return fn(x, y) { return x > y; }; }
+        let myFunction = fn(x, y) { return x + y; }
         "#;
         let expected = vec![
             "fn(x){(x + 1)}",
@@ -428,6 +473,7 @@ mod tests {
             "fn(){(1 + 1)}",
             "fn(){return (foobar + barfoo)}",
             "fn(){return fn(x, y){return (x > y)}}",
+            "let myFunction = fn(x, y){return (x + y)}",
         ];
         let l = Lexer::new(input);
         let mut p = Parser::new(l);

@@ -93,6 +93,9 @@ version = "0.1.0"
 [[package]]
 name = "rmonkey_error"
 version = "0.1.0"
+dependencies = [
+ "rmonkey_token",
+]
 
 [[package]]
 name = "rmonkey_lexer"
