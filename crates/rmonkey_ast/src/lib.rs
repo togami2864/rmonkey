@@ -36,6 +36,7 @@ impl fmt::Display for Stmt {
 pub enum Expr {
     Ident(String),
     IntLiteral(u64),
+    BoolLiteral(bool),
     PrefixExpr {
         op: Prefix,
         right: Box<Expr>,
@@ -52,6 +53,7 @@ impl fmt::Display for Expr {
         match self {
             Expr::Ident(val) => write!(f, "{}", val),
             Expr::IntLiteral(val) => write!(f, "{}", val),
+            Expr::BoolLiteral(val) => write!(f, "{}", val),
             Expr::PrefixExpr { op, right } => write!(f, "({}{})", op, right),
             Expr::InfixExpr { left, right, op } => write!(f, "({} {} {})", left, op, right),
         }

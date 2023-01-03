@@ -113,7 +113,9 @@ impl<'a> Parser<'a> {
         let mut left = match &self.cur_token {
             Token::Ident(val) => self.parse_identifier(val.to_owned())?,
             Token::Int(val) => self.parse_integer_literal(val.to_owned())?,
+            Token::True | Token::False => self.parse_bool_literal()?,
             Token::Bang | Token::Minus => self.parse_prefix_expr()?,
+            Token::LParen => self.parse_grouped_expr()?,
             _ => {
                 return Err(RMonkeyError::UnexpectedTokenError);
             }
@@ -132,6 +134,21 @@ impl<'a> Parser<'a> {
 
     fn parse_integer_literal(&mut self, val: u64) -> Result<Expr> {
         Ok(Expr::IntLiteral(val))
+    }
+
+    fn parse_bool_literal(&mut self) -> Result<Expr> {
+        let bool = self.cur_token_is(Token::True);
+        Ok(Expr::BoolLiteral(bool))
+    }
+
+    fn parse_grouped_expr(&mut self) -> Result<Expr> {
+        // consume `(`
+        self.next_token();
+        let expr = self.parse_expr(Precedence::Lowest);
+        if !self.expect_peek(Token::RParen) {
+            return Err(RMonkeyError::UnexpectedTokenError);
+        }
+        expr
     }
 
     fn parse_prefix_expr(&mut self) -> Result<Expr> {
@@ -180,6 +197,20 @@ mod tests {
     use crate::Parser;
 
     #[test]
+    fn test_literal_expressions() {
+        let input = r#"
+        true;
+        false;
+        "#;
+
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program().unwrap();
+
+        assert_eq!(program.stmts.len(), 2);
+    }
+
+    #[test]
     fn test_return_stmt() {
         let input = r#"
         return 5;
@@ -203,6 +234,11 @@ mod tests {
         5 > 4 == 3 < 4;
         5 < 4 != 3 > 4;
         3 + 4 * 5 == 3 * 1 + 4 * 5;
+        1 + (2 + 3) + 4;
+        (5 + 5) * 2;
+        2 / (5 + 5);
+        -(5 + 5);
+        !(true == true);
         ";
         let expected = vec![
             "((-a) * b)",
@@ -211,6 +247,11 @@ mod tests {
             "((5 > 4) == (3 < 4))",
             "((5 < 4) != (3 > 4))",
             "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+            "((1 + (2 + 3)) + 4)",
+            "((5 + 5) * 2)",
+            "(2 / (5 + 5))",
+            "(-(5 + 5))",
+            "(!(true == true))",
         ];
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
