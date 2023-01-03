@@ -1,5 +1,6 @@
 use std::io::{self, Write};
 
+use rmonkey_evaluator::Eval;
 use rmonkey_lexer::Lexer;
 use rmonkey_parser::Parser;
 
@@ -56,6 +57,28 @@ fn main() {
             }
         }
 
-        None => todo!(),
+        None => loop {
+            let mut buffer = String::new();
+            let stdin = io::stdin();
+            print!(">>> ");
+            io::stdout().flush().expect("Unable to flush stdout");
+            stdin
+                .read_line(&mut buffer)
+                .expect("Unable to read line from user");
+            match buffer.trim() {
+                ".quit" => {
+                    println!("Bye!");
+                    std::process::exit(0);
+                }
+                input => {
+                    let l = Lexer::new(input);
+                    let mut p = Parser::new(l);
+                    let program = p.parse_program().unwrap();
+                    let e = Eval {};
+                    let result = e.eval(program).unwrap();
+                    println!("{}", result);
+                }
+            }
+        },
     }
 }

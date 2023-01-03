@@ -64,7 +64,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_program(&mut self) -> Result<Program> {
+    pub fn parse_program(&mut self) -> Result<Program> {
         let mut stmts: Vec<Stmt> = vec![];
         while self.cur_token != Token::Eof {
             stmts.push(self.parse_stmt()?);
@@ -177,7 +177,7 @@ impl<'a> Parser<'a> {
         Ok(Expr::Ident(val))
     }
 
-    fn parse_integer_literal(&mut self, val: u64) -> Result<Expr> {
+    fn parse_integer_literal(&mut self, val: i64) -> Result<Expr> {
         Ok(Expr::IntLiteral(val))
     }
 

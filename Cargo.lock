@@ -81,7 +81,9 @@ checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 name = "rmonkey"
 version = "0.1.0"
 dependencies = [
+ "rmonkey_evaluator",
  "rmonkey_lexer",
+ "rmonkey_object",
  "rmonkey_parser",
  "rmonkey_token",
 ]
@@ -98,11 +100,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "rmonkey_evaluator"
+version = "0.1.0"
+dependencies = [
+ "rmonkey_ast",
+ "rmonkey_error",
+ "rmonkey_object",
+]
+
+[[package]]
 name = "rmonkey_lexer"
 version = "0.1.0"
 dependencies = [
  "rmonkey_token",
 ]
+
+[[package]]
+name = "rmonkey_object"
+version = "0.1.0"
 
 [[package]]
 name = "rmonkey_parser"

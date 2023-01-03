@@ -40,7 +40,7 @@ impl fmt::Display for Stmt {
 #[derive(Debug)]
 pub enum Expr {
     Ident(String),
-    IntLiteral(u64),
+    IntLiteral(i64),
     BoolLiteral(bool),
     If {
         condition: Box<Expr>,

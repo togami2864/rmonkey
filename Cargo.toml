@@ -9,4 +9,5 @@ edition = "2021"
 rmonkey_token = {path = "./crates/rmonkey_token/"}
 rmonkey_lexer = {path = "./crates/rmonkey_lexer/"}
 rmonkey_parser = {path = "./crates/rmonkey_parser/"}
-
+rmonkey_object = {path = "./crates/rmonkey_object/"}
+rmonkey_evaluator = {path = "./crates/rmonkey_evaluator/"}

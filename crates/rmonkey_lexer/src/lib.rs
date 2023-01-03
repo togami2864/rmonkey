@@ -108,8 +108,8 @@ impl<'a> Lexer<'a> {
         while self.cur.is_ascii_digit() {
             value.push(self.read_char());
         }
-        let value_u64 = value.parse::<u64>().unwrap();
-        Token::Int(value_u64)
+        let value_i64 = value.parse::<i64>().unwrap();
+        Token::Int(value_i64)
     }
 }
 
