@@ -78,14 +78,17 @@ impl<'a> Parser<'a> {
         if self.expect_peek(Token::Assign) {
             return Err(RMonkeyError::UnexpectedTokenError);
         }
+        // consume `=`
+        self.next_token();
 
-        while !self.cur_token_is(Token::Semicolon) {
+        let value = self.parse_expr(Precedence::Lowest)?;
+        if self.peek_token_is(Token::Semicolon) {
             self.next_token();
         }
 
         Ok(Stmt::LetStmt {
             name: Expr::Ident(ident),
-            value: Expr::Ident("empty".to_owned()),
+            value,
         })
     }
 
@@ -93,10 +96,12 @@ impl<'a> Parser<'a> {
         // consume `return keyword`
         self.next_token();
 
-        while !self.cur_token_is(Token::Semicolon) {
+        let return_val = self.parse_expr(Precedence::Lowest)?;
+
+        if self.peek_token_is(Token::Semicolon) {
             self.next_token();
         }
-        Ok(Stmt::ReturnStmt(Expr::Ident("empty".to_owned())))
+        Ok(Stmt::ReturnStmt(return_val))
     }
 
     fn parse_expr_stmt(&mut self) -> Result<Stmt> {
@@ -414,8 +419,16 @@ mod tests {
         fn(x){x + 1};
         fn(x,y){x+y};
         fn(){1+1};
+        fn() { return foobar + barfoo }
+        fn() { return fn(x, y) { return x > y; }; }
         "#;
-        let expected = vec!["fn(x){(x + 1)}", "fn(x, y){(x + y)}", "fn(){(1 + 1)}"];
+        let expected = vec![
+            "fn(x){(x + 1)}",
+            "fn(x, y){(x + y)}",
+            "fn(){(1 + 1)}",
+            "fn(){return (foobar + barfoo)}",
+            "fn(){return fn(x, y){return (x > y)}}",
+        ];
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
         let program = p.parse_program().unwrap();
