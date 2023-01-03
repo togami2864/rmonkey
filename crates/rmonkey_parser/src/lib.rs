@@ -131,15 +131,16 @@ impl<'a> Parser<'a> {
             Token::If => self.parse_if_expr()?,
             Token::Function => self.parse_func_literal()?,
             _ => {
-                dbg!(&self.cur_token);
-                dbg!(&self.peek_token);
                 return Err(RMonkeyError::UnexpectedTokenError);
             }
         };
 
         while !self.peek_token_is(Token::Semicolon) && prec < self.peek_token.cur_precedence() {
             self.next_token();
-            left = self.parse_infix_expr(left)?;
+            left = match self.cur_token {
+                Token::LParen => self.parse_call_expr(left)?,
+                _ => self.parse_infix_expr(left)?,
+            }
         }
         Ok(left)
     }
@@ -246,6 +247,40 @@ impl<'a> Parser<'a> {
         }
 
         Ok(Some(params))
+    }
+
+    fn parse_call_expr(&mut self, func: Expr) -> Result<Expr> {
+        let args = self.parse_call_args()?;
+        Ok(Expr::Call {
+            callee: Box::new(func),
+            args,
+        })
+    }
+
+    fn parse_call_args(&mut self) -> Result<Option<Vec<Expr>>> {
+        if self.peek_token_is(Token::RParen) {
+            self.next_token();
+            return Ok(None);
+        }
+
+        // consume `(`
+        self.next_token();
+        let mut args: Vec<Expr> = Vec::new();
+        let first_arg = self.parse_expr(Precedence::Lowest)?;
+        args.push(first_arg);
+
+        while self.peek_token_is(Token::Comma) {
+            self.next_token();
+            self.next_token();
+            let arg = self.parse_expr(Precedence::Lowest)?;
+            args.push(arg);
+        }
+
+        if !self.expect_peek(Token::RParen) {
+            return Err(RMonkeyError::UnexpectedTokenError);
+        }
+
+        Ok(Some(args))
     }
 
     fn parse_prefix_expr(&mut self) -> Result<Expr> {
@@ -378,8 +413,31 @@ mod tests {
         let input = r#"
         fn(x){x + 1};
         fn(x,y){x+y};
-        fn(){1+1};"#;
+        fn(){1+1};
+        "#;
         let expected = vec!["fn(x){(x + 1)}", "fn(x, y){(x + y)}", "fn(){(1 + 1)}"];
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program().unwrap();
+        assert_eq!(program.stmts.len(), expected.len());
+        for (i, p) in program.stmts.iter().enumerate() {
+            assert_eq!(p.to_string(), expected[i]);
+        }
+    }
+
+    #[test]
+    fn test_call_expr() {
+        let input = r#"add(1, 2 * 3, 4 + 5);
+        a + add(b * c) + d;
+        add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8));
+        add(a + b + c * d / f + g);
+        "#;
+        let expected = vec![
+            "add(1, (2 * 3), (4 + 5))",
+            "((a + add((b * c))) + d)",
+            "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+            "add((((a + b) + ((c * d) / f)) + g))",
+        ];
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
         let program = p.parse_program().unwrap();
