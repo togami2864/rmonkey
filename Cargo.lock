@@ -116,6 +116,7 @@ name = "rmonkey_token"
 version = "0.1.0"
 dependencies = [
  "phf",
+ "rmonkey_ast",
 ]
 
 [[package]]

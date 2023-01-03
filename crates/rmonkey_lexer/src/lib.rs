@@ -46,7 +46,7 @@ impl<'a> Lexer<'a> {
             '=' => {
                 if self.peek == '=' {
                     self.read_char();
-                    return Token::Eq;
+                    Token::Eq
                 } else {
                     Token::Assign
                 }
@@ -62,7 +62,7 @@ impl<'a> Lexer<'a> {
             '!' => {
                 if self.peek == '=' {
                     self.read_char();
-                    return Token::NotEq;
+                    Token::NotEq
                 } else {
                     Token::Bang
                 }
@@ -297,7 +297,7 @@ mod tests {
             (Token::NotEq, "!="),
             (Token::Int(9), "9"),
             (Token::Semicolon, ";"),
-            (Token::Eof, ""),
+            (Token::Eof, "Eof"),
         ];
 
         let mut l = Lexer::new(input);

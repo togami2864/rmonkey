@@ -1,4 +1,5 @@
 use phf::phf_map;
+use rmonkey_ast::precedence::Precedence;
 use std::fmt;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -30,6 +31,22 @@ pub enum Token {
     Return,
     Eq,
     NotEq,
+}
+
+impl Token {
+    pub fn cur_precedence(&self) -> Precedence {
+        match self {
+            Token::Eq => Precedence::Equals,
+            Token::NotEq => Precedence::Equals,
+            Token::Lt => Precedence::LessGreater,
+            Token::Gt => Precedence::LessGreater,
+            Token::Plus => Precedence::Sum,
+            Token::Minus => Precedence::Sum,
+            Token::Slash => Precedence::Product,
+            Token::Asterisk => Precedence::Product,
+            _ => Precedence::Lowest,
+        }
+    }
 }
 
 impl fmt::Display for Token {
