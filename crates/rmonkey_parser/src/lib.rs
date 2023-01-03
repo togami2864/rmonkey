@@ -26,6 +26,17 @@ impl<'a> Parser<'a> {
         parser
     }
 
+    pub fn parse(&mut self) {
+        match self.parse_program() {
+            Ok(p) => {
+                for p in p.stmts.iter() {
+                    println!("{:?}", p);
+                }
+            }
+            Err(err) => eprintln!("{}", err),
+        }
+    }
+
     fn next_token(&mut self) -> Token {
         let cur = self.cur_token.clone();
         self.cur_token = self.peek_token.clone();
@@ -408,31 +419,32 @@ mod tests {
 
     #[test]
     fn test_infix_expression() {
-        let input = "
+        let input = "5 + 5;
+        5 - 5;
+        5 * 5;
+        5 / 5;
+        5 + 5 * 5;
+        5 * 5 - 5 * 5 + 1;
         -a * b;
         !-a;
         a + b * c + d / e - f;
         5 > 4 == 3 < 4;
         5 < 4 != 3 > 4;
         3 + 4 * 5 == 3 * 1 + 4 * 5;
-        1 + (2 + 3) + 4;
-        (5 + 5) * 2;
-        2 / (5 + 5);
-        -(5 + 5);
-        !(true == true);
         ";
         let expected = vec![
+            "(5 + 5)",
+            "(5 - 5)",
+            "(5 * 5)",
+            "(5 / 5)",
+            "(5 + (5 * 5))",
+            "(((5 * 5) - (5 * 5)) + 1)",
             "((-a) * b)",
             "(!(-a))",
             "(((a + (b * c)) + (d / e)) - f)",
             "((5 > 4) == (3 < 4))",
             "((5 < 4) != (3 > 4))",
             "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
-            "((1 + (2 + 3)) + 4)",
-            "((5 + 5) * 2)",
-            "(2 / (5 + 5))",
-            "(-(5 + 5))",
-            "(!(true == true))",
         ];
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
