@@ -114,8 +114,7 @@ impl<'a> Parser<'a> {
             Token::Ident(val) => self.parse_identifier(val.to_owned())?,
             Token::Int(val) => self.parse_integer_literal(val.to_owned())?,
             Token::Bang | Token::Minus => self.parse_prefix_expr()?,
-            t => {
-                dbg!(t);
+            _ => {
                 return Err(RMonkeyError::UnexpectedTokenError);
             }
         };

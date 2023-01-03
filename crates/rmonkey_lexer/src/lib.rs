@@ -255,6 +255,7 @@ mod tests {
             (Token::Int(5), "5"),
             (Token::Lt, "<"),
             (Token::Int(10), "10"),
+            (Token::RParen, ")"),
             (Token::LBrace, "{"),
             (Token::Return, "return"),
             (Token::True, "true"),
@@ -266,7 +267,7 @@ mod tests {
             (Token::False, "false"),
             (Token::Semicolon, ";"),
             (Token::RBrace, "}"),
-            (Token::Eof, ""),
+            (Token::Eof, "Eof"),
         ];
 
         let mut l = Lexer::new(input);
