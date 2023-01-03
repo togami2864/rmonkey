@@ -56,6 +56,10 @@ pub enum Expr {
         right: Box<Expr>,
         op: Infix,
     },
+    Func {
+        params: Option<Vec<Expr>>,
+        body: Box<Stmt>,
+    },
 }
 
 impl fmt::Display for Expr {
@@ -78,6 +82,24 @@ impl fmt::Display for Expr {
             },
             Expr::PrefixExpr { op, right } => write!(f, "({}{})", op, right),
             Expr::InfixExpr { left, right, op } => write!(f, "({} {} {})", left, op, right),
+            Expr::Func { params, body } => match params {
+                Some(params) => {
+                    if params.len() == 1 {
+                        write!(f, "fn({}){{{}}}", params[0], body)
+                    } else {
+                        let params: Vec<String> = params.iter().map(|p| p.to_string()).collect();
+                        write!(
+                            f,
+                            "fn({}){{{}}}",
+                            params.join(", ").trim_end_matches(", "),
+                            body
+                        )
+                    }
+                }
+                None => {
+                    write!(f, "fn(){{{}}}", body)
+                }
+            },
         }
     }
 }

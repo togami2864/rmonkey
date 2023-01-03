@@ -129,6 +129,7 @@ impl<'a> Parser<'a> {
             Token::Bang | Token::Minus => self.parse_prefix_expr()?,
             Token::LParen => self.parse_grouped_expr()?,
             Token::If => self.parse_if_expr()?,
+            Token::Function => self.parse_func_literal()?,
             _ => {
                 dbg!(&self.cur_token);
                 dbg!(&self.peek_token);
@@ -198,6 +199,53 @@ impl<'a> Parser<'a> {
             consequence: Box::new(consequence),
             alternative: None,
         })
+    }
+
+    fn parse_func_literal(&mut self) -> Result<Expr> {
+        if !self.expect_peek(Token::LParen) {
+            return Err(RMonkeyError::UnexpectedTokenError);
+        }
+
+        let params = self.parse_func_params()?;
+        self.next_token();
+        let body = self.parse_block_stmt()?;
+        Ok(Expr::Func {
+            params,
+            body: Box::new(body),
+        })
+    }
+
+    fn parse_func_params(&mut self) -> Result<Option<Vec<Expr>>> {
+        if self.peek_token_is(Token::RParen) {
+            self.next_token();
+            return Ok(None);
+        }
+
+        // consume `(`
+        self.next_token();
+        let mut params: Vec<Expr> = Vec::new();
+        let first_param = match &self.cur_token {
+            Token::Ident(val) => Expr::Ident(val.to_owned()),
+            _ => return Err(RMonkeyError::UnexpectedTokenError),
+        };
+        params.push(first_param);
+
+        while self.peek_token_is(Token::Comma) {
+            self.next_token();
+            self.next_token();
+            match &self.cur_token {
+                Token::Ident(val) => {
+                    params.push(Expr::Ident(val.to_owned()));
+                }
+                _ => return Err(RMonkeyError::UnexpectedTokenError),
+            }
+        }
+
+        if !self.expect_peek(Token::RParen) {
+            return Err(RMonkeyError::UnexpectedTokenError);
+        }
+
+        Ok(Some(params))
     }
 
     fn parse_prefix_expr(&mut self) -> Result<Expr> {
@@ -316,6 +364,22 @@ mod tests {
         let input = r#"if(x < y){x};
         if(a<b){a}else{b};"#;
         let expected = vec!["if((x < y)){x}", "if((a < b)){a}else{b}"];
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program().unwrap();
+        assert_eq!(program.stmts.len(), expected.len());
+        for (i, p) in program.stmts.iter().enumerate() {
+            assert_eq!(p.to_string(), expected[i]);
+        }
+    }
+
+    #[test]
+    fn test_function_literal() {
+        let input = r#"
+        fn(x){x + 1};
+        fn(x,y){x+y};
+        fn(){1+1};"#;
+        let expected = vec!["fn(x){(x + 1)}", "fn(x, y){(x + y)}", "fn(){(1 + 1)}"];
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
         let program = p.parse_program().unwrap();
