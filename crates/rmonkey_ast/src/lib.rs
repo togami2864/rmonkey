@@ -20,6 +20,7 @@ pub enum Stmt {
     LetStmt { name: Expr, value: Expr },
     ReturnStmt(Expr),
     ExprStmt(Expr),
+    BlockStmt { stmts: Vec<Stmt> },
 }
 
 impl fmt::Display for Stmt {
@@ -28,6 +29,10 @@ impl fmt::Display for Stmt {
             Stmt::LetStmt { name, value } => write!(f, "let {} = {}", name, value),
             Stmt::ReturnStmt(value) => write!(f, "return {}", value),
             Stmt::ExprStmt(expr) => write!(f, "{}", expr),
+            Stmt::BlockStmt { stmts } => {
+                let stmts: Vec<String> = stmts.iter().map(|stmt| stmt.to_string()).collect();
+                write!(f, "{}", stmts.join("\n"))
+            }
         }
     }
 }
@@ -37,6 +42,11 @@ pub enum Expr {
     Ident(String),
     IntLiteral(u64),
     BoolLiteral(bool),
+    If {
+        condition: Box<Expr>,
+        consequence: Box<Stmt>,
+        alternative: Option<Box<Stmt>>,
+    },
     PrefixExpr {
         op: Prefix,
         right: Box<Expr>,
@@ -54,6 +64,18 @@ impl fmt::Display for Expr {
             Expr::Ident(val) => write!(f, "{}", val),
             Expr::IntLiteral(val) => write!(f, "{}", val),
             Expr::BoolLiteral(val) => write!(f, "{}", val),
+            Expr::If {
+                condition,
+                consequence,
+                alternative,
+            } => match alternative {
+                Some(alt) => {
+                    write!(f, "if({}){{{}}}else{{{}}}", condition, consequence, alt)
+                }
+                None => {
+                    write!(f, "if({}){{{}}}", condition, consequence)
+                }
+            },
             Expr::PrefixExpr { op, right } => write!(f, "({}{})", op, right),
             Expr::InfixExpr { left, right, op } => write!(f, "({} {} {})", left, op, right),
         }

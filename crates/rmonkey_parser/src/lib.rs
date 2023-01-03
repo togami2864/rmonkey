@@ -107,6 +107,18 @@ impl<'a> Parser<'a> {
         Ok(Stmt::ExprStmt(expr))
     }
 
+    /// should call this if `self.cur_token == Token::LBrace`
+    fn parse_block_stmt(&mut self) -> Result<Stmt> {
+        self.next_token();
+        let mut stmts: Vec<Stmt> = Vec::new();
+        while !self.cur_token_is(Token::RBrace) && !self.cur_token_is(Token::Eof) {
+            let stmt = self.parse_stmt()?;
+            stmts.push(stmt);
+            self.next_token();
+        }
+        Ok(Stmt::BlockStmt { stmts })
+    }
+
     /// The function begins with the token associated with the syntax parsing function set to curToken.
     /// It then proceeds until the last token of the expression being processed is set to curToken.
     fn parse_expr(&mut self, prec: Precedence) -> Result<Expr> {
@@ -116,7 +128,10 @@ impl<'a> Parser<'a> {
             Token::True | Token::False => self.parse_bool_literal()?,
             Token::Bang | Token::Minus => self.parse_prefix_expr()?,
             Token::LParen => self.parse_grouped_expr()?,
+            Token::If => self.parse_if_expr()?,
             _ => {
+                dbg!(&self.cur_token);
+                dbg!(&self.peek_token);
                 return Err(RMonkeyError::UnexpectedTokenError);
             }
         };
@@ -149,6 +164,40 @@ impl<'a> Parser<'a> {
             return Err(RMonkeyError::UnexpectedTokenError);
         }
         expr
+    }
+
+    fn parse_if_expr(&mut self) -> Result<Expr> {
+        if !self.expect_peek(Token::LParen) {
+            return Err(RMonkeyError::UnexpectedTokenError);
+        };
+        // consume `(`
+        self.next_token();
+
+        let condition = self.parse_expr(Precedence::Lowest)?;
+        if !self.expect_peek(Token::RParen) {
+            return Err(RMonkeyError::UnexpectedTokenError);
+        };
+        // consume `{`
+        self.next_token();
+
+        let consequence = self.parse_block_stmt()?;
+
+        if self.expect_peek(Token::Else) {
+            // consume `{`
+            self.next_token();
+            let alt = self.parse_block_stmt()?;
+            return Ok(Expr::If {
+                condition: Box::new(condition),
+                consequence: Box::new(consequence),
+                alternative: Some(Box::new(alt)),
+            });
+        }
+
+        Ok(Expr::If {
+            condition: Box::new(condition),
+            consequence: Box::new(consequence),
+            alternative: None,
+        })
     }
 
     fn parse_prefix_expr(&mut self) -> Result<Expr> {
@@ -253,6 +302,20 @@ mod tests {
             "(-(5 + 5))",
             "(!(true == true))",
         ];
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program().unwrap();
+        assert_eq!(program.stmts.len(), expected.len());
+        for (i, p) in program.stmts.iter().enumerate() {
+            assert_eq!(p.to_string(), expected[i]);
+        }
+    }
+
+    #[test]
+    fn test_if_expression() {
+        let input = r#"if(x < y){x};
+        if(a<b){a}else{b};"#;
+        let expected = vec!["if((x < y)){x}", "if((a < b)){a}else{b}"];
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
         let program = p.parse_program().unwrap();
