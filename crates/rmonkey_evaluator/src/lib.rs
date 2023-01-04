@@ -2,7 +2,7 @@ use rmonkey_ast::{
     operator::{Infix, Prefix},
     Expr, Program, Stmt,
 };
-use rmonkey_error::Result;
+use rmonkey_error::{eval_error::EvalErrorKind, RMonkeyError, Result};
 use rmonkey_object::Object;
 
 #[derive(Debug)]
@@ -40,6 +40,7 @@ impl Evaluator {
         let mut result = Object::Null;
         for s in stmts.iter() {
             result = self.eval_stmt(s)?;
+            // should not unwrap `RETURN_VALUE`
             if result.obj_type() == "RETURN_VALUE" {
                 return Ok(result);
             }
@@ -67,7 +68,7 @@ impl Evaluator {
     fn eval_prefix_expr(&self, op: &Prefix, right: &Expr) -> Result<Object> {
         let right = self.eval_expr(right)?;
         match op {
-            Prefix::Minus => Ok(self.eval_minus_operator_expr(right)),
+            Prefix::Minus => Ok(self.eval_minus_operator_expr(right)?),
             Prefix::Bang => Ok(self.eval_bang_operator_expr(right)),
         }
     }
@@ -80,31 +81,58 @@ impl Evaluator {
         }
     }
 
-    fn eval_minus_operator_expr(&self, right: Object) -> Object {
+    fn eval_minus_operator_expr(&self, right: Object) -> Result<Object> {
         if let Object::Int(val) = right {
-            Object::Int(-val)
+            Ok(Object::Int(-val))
         } else {
-            Object::Null
+            Err(RMonkeyError::EvalError(
+                rmonkey_error::eval_error::EvalErrorKind::UnknownPrefixOperator {
+                    op: Prefix::Minus,
+                    right,
+                },
+            ))
         }
     }
 
     fn eval_infix_expr(&self, op: &Infix, left: &Expr, right: &Expr) -> Result<Object> {
         let left = self.eval_expr(left)?;
         let right = self.eval_expr(right)?;
-        match (left, right) {
+        match (&left, &right) {
             (Object::Int(left_val), Object::Int(right_val)) => {
                 Ok(self.eval_int_infix_expr(op, left_val, right_val))
             }
             (Object::Bool(left_val), Object::Bool(right_val)) => match op {
                 Infix::Eq => Ok(self.native_bool_to_bool_object(left_val == right_val)),
                 Infix::NotEq => Ok(self.native_bool_to_bool_object(left_val != right_val)),
-                _ => Ok(Object::Null),
+                _ => Err(RMonkeyError::EvalError(
+                    EvalErrorKind::UnknownInfixOperator {
+                        op: op.clone(),
+                        left,
+                        right,
+                    },
+                )),
             },
-            _ => Ok(Object::Null),
+            _ => {
+                if left.obj_type() != right.obj_type() {
+                    Err(RMonkeyError::EvalError(EvalErrorKind::TypeMismatch {
+                        op: op.clone(),
+                        left,
+                        right,
+                    }))
+                } else {
+                    Err(RMonkeyError::EvalError(
+                        EvalErrorKind::UnknownInfixOperator {
+                            op: op.clone(),
+                            left,
+                            right,
+                        },
+                    ))
+                }
+            }
         }
     }
 
-    fn eval_int_infix_expr(&self, op: &Infix, left: i64, right: i64) -> Object {
+    fn eval_int_infix_expr(&self, op: &Infix, left: &i64, right: &i64) -> Object {
         match op {
             Infix::Plus => Object::Int(left + right),
             Infix::Minus => Object::Int(left - right),
@@ -260,9 +288,10 @@ mod tests {
             ("return 10", "10"),
             ("return 2 * 5", "10"),
             (
-                "if (10 > 1) { if (10 > 1) {
-            return 10; }
-            return 1; }",
+                "if (10 > 1) {
+                    if (10 > 1) { return 10; }
+                    return 1;
+                }",
                 "10",
             ),
         ];

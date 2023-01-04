@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 rmonkey_token = {path = "../rmonkey_token"}
+rmonkey_object = {path = "../rmonkey_object"}
+rmonkey_ast = {path = "../rmonkey_ast"}

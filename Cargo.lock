@@ -96,6 +96,8 @@ version = "0.1.0"
 name = "rmonkey_error"
 version = "0.1.0"
 dependencies = [
+ "rmonkey_ast",
+ "rmonkey_object",
  "rmonkey_token",
 ]
 
