@@ -105,7 +105,9 @@ version = "0.1.0"
 dependencies = [
  "rmonkey_ast",
  "rmonkey_error",
+ "rmonkey_lexer",
  "rmonkey_object",
+ "rmonkey_parser",
 ]
 
 [[package]]

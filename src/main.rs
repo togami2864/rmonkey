@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use rmonkey_evaluator::Eval;
+use rmonkey_evaluator::Evaluator;
 use rmonkey_lexer::Lexer;
 use rmonkey_parser::Parser;
 
@@ -74,7 +74,7 @@ fn main() {
                     let l = Lexer::new(input);
                     let mut p = Parser::new(l);
                     let program = p.parse_program().unwrap();
-                    let e = Eval {};
+                    let e = Evaluator {};
                     let result = e.eval(program).unwrap();
                     println!("{}", result);
                 }

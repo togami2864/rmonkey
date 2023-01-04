@@ -9,3 +9,7 @@ edition = "2021"
 rmonkey_object = {path = "../rmonkey_object/"}
 rmonkey_ast = {path = "../rmonkey_ast/"}
 rmonkey_error = {path = "../rmonkey_error/"}
+
+[dev-dependencies]
+rmonkey_lexer = {path = "../rmonkey_lexer/"}
+rmonkey_parser = {path = "../rmonkey_parser/"}
