@@ -17,6 +17,9 @@ impl Evaluator {
         let mut result = Object::Null;
         for p in node.stmts.iter() {
             result = self.eval_stmt(p)?;
+            if let Object::ReturnValue(val) = result {
+                return Ok(*val);
+            };
         }
         Ok(result)
     }
@@ -24,7 +27,10 @@ impl Evaluator {
     fn eval_stmt(&self, node: &Stmt) -> Result<Object> {
         match node {
             Stmt::LetStmt { name, value } => todo!(),
-            Stmt::ReturnStmt(expr) => Ok(self.eval_expr(expr)?),
+            Stmt::ReturnStmt(expr) => {
+                let value = self.eval_expr(expr)?;
+                Ok(Object::ReturnValue(Box::new(value)))
+            }
             Stmt::ExprStmt(expr) => Ok(self.eval_expr(expr)?),
             Stmt::BlockStmt { stmts } => Ok(self.eval_block_stmt(stmts)?),
         }
@@ -34,6 +40,9 @@ impl Evaluator {
         let mut result = Object::Null;
         for s in stmts.iter() {
             result = self.eval_stmt(s)?;
+            if result.obj_type() == "RETURN_VALUE" {
+                return Ok(result);
+            }
         }
         Ok(result)
     }
@@ -234,6 +243,28 @@ mod tests {
             ("if (false) { 10 }", "null"),
             ("if (5 * 5 + 10 > 34) { 99 } else { 100 }", "99"),
             ("if ((1000 / 2) + 250 * 2 == 1000) { 9999 }", "9999"),
+        ];
+        for (input, expected) in case.iter() {
+            let mut e = Evaluator::new();
+            let l = Lexer::new(input);
+            let mut p = Parser::new(l);
+            let program = p.parse_program().unwrap();
+            let r = e.eval(program).unwrap();
+            assert_eq!(r.to_string(), *expected)
+        }
+    }
+
+    #[test]
+    fn test_return_stmt() {
+        let case = [
+            ("return 10", "10"),
+            ("return 2 * 5", "10"),
+            (
+                "if (10 > 1) { if (10 > 1) {
+            return 10; }
+            return 1; }",
+                "10",
+            ),
         ];
         for (input, expected) in case.iter() {
             let mut e = Evaluator::new();

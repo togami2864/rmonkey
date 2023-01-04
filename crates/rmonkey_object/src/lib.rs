@@ -5,6 +5,7 @@ pub enum Object {
     Int(i64),
     Bool(bool),
     Null,
+    ReturnValue(Box<Object>),
 }
 
 impl Object {
@@ -13,6 +14,7 @@ impl Object {
             Object::Int(_) => "INTEGER",
             Object::Bool(_) => "BOOLEAN",
             Object::Null => "NULL",
+            Object::ReturnValue(_) => "RETURN_VALUE",
         }
     }
 }
@@ -23,6 +25,7 @@ impl fmt::Display for Object {
             Object::Int(val) => write!(f, "{}", val),
             Object::Bool(val) => write!(f, "{}", val),
             Object::Null => write!(f, "null"),
+            Object::ReturnValue(obj) => write!(f, "return {}", obj),
         }
     }
 }
