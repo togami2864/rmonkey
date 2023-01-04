@@ -12,6 +12,7 @@ impl Evaluator {
     pub fn new() -> Self {
         Evaluator {}
     }
+
     pub fn eval(&self, node: Program) -> Result<Object> {
         let mut result = Object::Null;
         for p in node.stmts.iter() {
@@ -25,8 +26,16 @@ impl Evaluator {
             Stmt::LetStmt { name, value } => todo!(),
             Stmt::ReturnStmt(expr) => Ok(self.eval_expr(expr)?),
             Stmt::ExprStmt(expr) => Ok(self.eval_expr(expr)?),
-            Stmt::BlockStmt { stmts } => todo!(),
+            Stmt::BlockStmt { stmts } => Ok(self.eval_block_stmt(stmts)?),
         }
+    }
+
+    fn eval_block_stmt(&self, stmts: &[Stmt]) -> Result<Object> {
+        let mut result = Object::Null;
+        for s in stmts.iter() {
+            result = self.eval_stmt(s)?;
+        }
+        Ok(result)
     }
 
     fn eval_expr(&self, node: &Expr) -> Result<Object> {
@@ -38,7 +47,7 @@ impl Evaluator {
                 condition,
                 consequence,
                 alternative,
-            } => todo!(),
+            } => self.eval_if_expr(condition, consequence, alternative),
             Expr::PrefixExpr { op, right } => Ok(self.eval_prefix_expr(op, right)?),
             Expr::InfixExpr { left, right, op } => Ok(self.eval_infix_expr(op, left, right)?),
             Expr::Func { params, body } => todo!(),
@@ -104,6 +113,30 @@ impl Evaluator {
         match val {
             true => Object::Bool(true),
             false => Object::Bool(false),
+        }
+    }
+
+    fn eval_if_expr(
+        &self,
+        condition: &Expr,
+        consequence: &Stmt,
+        alt: &Option<Box<Stmt>>,
+    ) -> Result<Object> {
+        let cond = self.eval_expr(condition)?;
+        if self.is_truthy(cond) {
+            return self.eval_stmt(consequence);
+        }
+        match alt {
+            Some(alt) => self.eval_stmt(alt),
+            None => Ok(Object::Null),
+        }
+    }
+
+    fn is_truthy(&self, obj: Object) -> bool {
+        match obj {
+            Object::Bool(val) => val,
+            Object::Null => false,
+            _ => true,
         }
     }
 }
@@ -192,6 +225,23 @@ mod tests {
             let program = p.parse_program().unwrap();
             let r = e.eval(program).unwrap();
             assert_eq!(r.to_string(), expected)
+        }
+    }
+    #[test]
+    fn test_if_else_expr() {
+        let case = [
+            ("if(true){10}", "10"),
+            ("if (false) { 10 }", "null"),
+            ("if (5 * 5 + 10 > 34) { 99 } else { 100 }", "99"),
+            ("if ((1000 / 2) + 250 * 2 == 1000) { 9999 }", "9999"),
+        ];
+        for (input, expected) in case.iter() {
+            let mut e = Evaluator::new();
+            let l = Lexer::new(input);
+            let mut p = Parser::new(l);
+            let program = p.parse_program().unwrap();
+            let r = e.eval(program).unwrap();
+            assert_eq!(r.to_string(), *expected)
         }
     }
 }
