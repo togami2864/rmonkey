@@ -15,7 +15,7 @@ impl Program {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     LetStmt { name: Expr, value: Expr },
     ReturnStmt(Expr),
@@ -37,7 +37,7 @@ impl fmt::Display for Stmt {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Ident(String),
     IntLiteral(i64),
@@ -57,12 +57,12 @@ pub enum Expr {
         op: Infix,
     },
     Func {
-        params: Option<Vec<Expr>>,
+        params: Vec<Expr>,
         body: Box<Stmt>,
     },
     Call {
         callee: Box<Expr>,
-        args: Option<Vec<Expr>>,
+        args: Vec<Expr>,
     },
 }
 
@@ -86,29 +86,25 @@ impl fmt::Display for Expr {
             },
             Expr::PrefixExpr { op, right } => write!(f, "({}{})", op, right),
             Expr::InfixExpr { left, right, op } => write!(f, "({} {} {})", left, op, right),
-            Expr::Func { params, body } => match params {
-                Some(params) => {
-                    let params: Vec<String> = params.iter().map(|p| p.to_string()).collect();
-                    write!(
-                        f,
-                        "fn({}){{{}}}",
-                        params.join(", ").trim_end_matches(", "),
-                        body
-                    )
+            Expr::Func { params, body } => {
+                if params.is_empty() {
+                    return write!(f, "fn(){{{}}}", body);
                 }
-                None => {
-                    write!(f, "fn(){{{}}}", body)
+                let params: Vec<String> = params.iter().map(|p| p.to_string()).collect();
+                write!(
+                    f,
+                    "fn({}){{{}}}",
+                    params.join(", ").trim_end_matches(", "),
+                    body
+                )
+            }
+            Expr::Call { callee, args } => {
+                if args.is_empty() {
+                    return write!(f, "{}()", callee);
                 }
-            },
-            Expr::Call { callee, args } => match args {
-                Some(args) => {
-                    let args: Vec<String> = args.iter().map(|a| a.to_string()).collect();
-                    write!(f, "{}({})", callee, args.join(", ").trim_end_matches(", "))
-                }
-                None => {
-                    write!(f, "{}()", callee)
-                }
-            },
+                let args: Vec<String> = args.iter().map(|a| a.to_string()).collect();
+                write!(f, "{}({})", callee, args.join(", ").trim_end_matches(", "))
+            }
         }
     }
 }

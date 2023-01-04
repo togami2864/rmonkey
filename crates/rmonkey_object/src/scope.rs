@@ -2,22 +2,42 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::Object;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Scope {
-    store: Rc<RefCell<HashMap<String, Object>>>,
+    pub store: HashMap<String, Object>,
+    pub parent: Option<Rc<RefCell<Scope>>>,
 }
 
 impl Scope {
     pub fn new() -> Self {
-        let store: Rc<RefCell<HashMap<String, Object>>> = Rc::new(RefCell::new(HashMap::new()));
-        Scope { store }
+        let store: HashMap<String, Object> = HashMap::new();
+        Scope {
+            store,
+            parent: None,
+        }
+    }
+
+    /// create child scope that has given scope as the parent scope
+    pub fn new_enclosed_environment(parent_scope: Rc<RefCell<Scope>>) -> Self {
+        Scope {
+            store: Default::default(),
+            parent: Some(parent_scope),
+        }
     }
 
     pub fn set(&mut self, key: String, val: Object) {
-        self.store.borrow_mut().insert(key, val).unwrap();
+        self.store.insert(key, val);
     }
 
     pub fn get(&self, key: String) -> Option<Object> {
-        self.store.borrow().get(&key).cloned()
+        match self.store.get(&key) {
+            Some(val) => Some(val.clone()),
+            None => {
+                if let Some(parent) = &self.parent {
+                    return parent.borrow().store.get(&key).cloned();
+                }
+                None
+            }
+        }
     }
 }

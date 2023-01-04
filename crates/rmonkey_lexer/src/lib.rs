@@ -199,7 +199,6 @@ mod tests {
         for (exp, exp_literal) in tests.iter() {
             let token = l.next_token();
             if token != *exp {
-                dbg!(&token);
                 panic!(
                     "assertion failed at {} => left: {}, right: {}",
                     l.cur, token, exp

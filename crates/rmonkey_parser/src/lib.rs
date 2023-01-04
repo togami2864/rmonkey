@@ -256,10 +256,10 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_func_params(&mut self) -> Result<Option<Vec<Expr>>> {
+    fn parse_func_params(&mut self) -> Result<Vec<Expr>> {
         if self.peek_token_is(Token::RParen) {
             self.next_token();
-            return Ok(None);
+            return Ok(Vec::new());
         }
 
         // consume `(`
@@ -299,7 +299,7 @@ impl<'a> Parser<'a> {
             });
         }
 
-        Ok(Some(params))
+        Ok(params)
     }
 
     fn parse_call_expr(&mut self, func: Expr) -> Result<Expr> {
@@ -310,10 +310,10 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_call_args(&mut self) -> Result<Option<Vec<Expr>>> {
+    fn parse_call_args(&mut self) -> Result<Vec<Expr>> {
         if self.peek_token_is(Token::RParen) {
             self.next_token();
-            return Ok(None);
+            return Ok(Vec::new());
         }
 
         // consume `(`
@@ -336,7 +336,7 @@ impl<'a> Parser<'a> {
             });
         }
 
-        Ok(Some(args))
+        Ok(args)
     }
 
     fn parse_prefix_expr(&mut self) -> Result<Expr> {

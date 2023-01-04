@@ -122,6 +122,9 @@ dependencies = [
 [[package]]
 name = "rmonkey_object"
 version = "0.1.0"
+dependencies = [
+ "rmonkey_ast",
+]
 
 [[package]]
 name = "rmonkey_parser"
