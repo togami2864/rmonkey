@@ -1,5 +1,7 @@
 use std::fmt;
 
+pub mod scope;
+
 #[derive(Debug, Clone)]
 pub enum Object {
     Int(i64),

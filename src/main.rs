@@ -74,9 +74,7 @@ fn main() {
                     let l = Lexer::new(input);
                     let mut p = Parser::new(l);
                     let program = p.parse_program().unwrap();
-                    let e = Evaluator {};
-                    // let result = e.eval(program).unwrap();
-                    // println!("{}", result);
+                    let mut e = Evaluator::new();
                     match e.eval(program) {
                         Ok(result) => println!("{}", result),
                         Err(err) => eprintln!("{}", err),

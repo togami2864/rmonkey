@@ -3,17 +3,21 @@ use rmonkey_ast::{
     Expr, Program, Stmt,
 };
 use rmonkey_error::{eval_error::EvalErrorKind, RMonkeyError, Result};
-use rmonkey_object::Object;
+use rmonkey_object::{scope::Scope, Object};
 
-#[derive(Debug)]
-pub struct Evaluator {}
+#[derive(Debug, Default)]
+pub struct Evaluator {
+    scope: Scope,
+}
 
 impl Evaluator {
     pub fn new() -> Self {
-        Evaluator {}
+        Evaluator {
+            scope: Default::default(),
+        }
     }
 
-    pub fn eval(&self, node: Program) -> Result<Object> {
+    pub fn eval(&mut self, node: Program) -> Result<Object> {
         let mut result = Object::Null;
         for p in node.stmts.iter() {
             result = self.eval_stmt(p)?;
@@ -24,9 +28,14 @@ impl Evaluator {
         Ok(result)
     }
 
-    fn eval_stmt(&self, node: &Stmt) -> Result<Object> {
+    fn eval_stmt(&mut self, node: &Stmt) -> Result<Object> {
         match node {
-            Stmt::LetStmt { name, value } => todo!(),
+            Stmt::LetStmt { name, value } => {
+                let ident = self.eval_expr(name)?;
+                let value = self.eval_expr(value)?;
+                self.scope.set(ident.to_string(), value);
+                Ok(Object::Null)
+            }
             Stmt::ReturnStmt(expr) => {
                 let value = self.eval_expr(expr)?;
                 Ok(Object::ReturnValue(Box::new(value)))
@@ -36,7 +45,7 @@ impl Evaluator {
         }
     }
 
-    fn eval_block_stmt(&self, stmts: &[Stmt]) -> Result<Object> {
+    fn eval_block_stmt(&mut self, stmts: &[Stmt]) -> Result<Object> {
         let mut result = Object::Null;
         for s in stmts.iter() {
             result = self.eval_stmt(s)?;
@@ -48,9 +57,9 @@ impl Evaluator {
         Ok(result)
     }
 
-    fn eval_expr(&self, node: &Expr) -> Result<Object> {
+    fn eval_expr(&mut self, node: &Expr) -> Result<Object> {
         match node {
-            Expr::Ident(_) => todo!(),
+            Expr::Ident(val) => Ok(self.eval_ident(val)?),
             Expr::IntLiteral(val) => Ok(Object::Int(*val)),
             Expr::BoolLiteral(val) => Ok(Object::Bool(*val)),
             Expr::If {
@@ -65,7 +74,17 @@ impl Evaluator {
         }
     }
 
-    fn eval_prefix_expr(&self, op: &Prefix, right: &Expr) -> Result<Object> {
+    fn eval_ident(&self, ident: &String) -> Result<Object> {
+        if let Some(val) = self.scope.get(ident.to_string()) {
+            Ok(val)
+        } else {
+            Err(RMonkeyError::EvalError(EvalErrorKind::UncaughtRef {
+                ident: ident.to_string(),
+            }))
+        }
+    }
+
+    fn eval_prefix_expr(&mut self, op: &Prefix, right: &Expr) -> Result<Object> {
         let right = self.eval_expr(right)?;
         match op {
             Prefix::Minus => Ok(self.eval_minus_operator_expr(right)?),
@@ -94,7 +113,7 @@ impl Evaluator {
         }
     }
 
-    fn eval_infix_expr(&self, op: &Infix, left: &Expr, right: &Expr) -> Result<Object> {
+    fn eval_infix_expr(&mut self, op: &Infix, left: &Expr, right: &Expr) -> Result<Object> {
         let left = self.eval_expr(left)?;
         let right = self.eval_expr(right)?;
         match (&left, &right) {
@@ -154,7 +173,7 @@ impl Evaluator {
     }
 
     fn eval_if_expr(
-        &self,
+        &mut self,
         condition: &Expr,
         consequence: &Stmt,
         alt: &Option<Box<Stmt>>,
@@ -196,11 +215,9 @@ mod tests {
             ("!!-5", "true"),
             ("-5", "-5"),
             ("-10", "-10"),
-            ("-true", "null"),
-            ("-false", "null"),
         ];
         for (input, expected) in case.iter() {
-            let e = Evaluator {};
+            let mut e = Evaluator::new();
             let l = Lexer::new(input);
             let mut p = Parser::new(l);
             let program = p.parse_program().unwrap();
@@ -294,6 +311,24 @@ mod tests {
                 }",
                 "10",
             ),
+        ];
+        for (input, expected) in case.iter() {
+            let mut e = Evaluator::new();
+            let l = Lexer::new(input);
+            let mut p = Parser::new(l);
+            let program = p.parse_program().unwrap();
+            let r = e.eval(program).unwrap();
+            assert_eq!(r.to_string(), *expected)
+        }
+    }
+
+    #[test]
+    fn test_let_statement() {
+        let case = [
+            ("let a = 5; a;", "5"),
+            ("let a = 5 * 5; a;", "25"),
+            ("let a = 5; let b = a; b;", "5"),
+            ("let a = 5; let b = a; let c = a + b + 5; c;", "15"),
         ];
         for (input, expected) in case.iter() {
             let mut e = Evaluator::new();

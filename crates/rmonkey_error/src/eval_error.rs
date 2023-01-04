@@ -19,6 +19,9 @@ pub enum EvalErrorKind {
         op: Prefix,
         right: Object,
     },
+    UncaughtRef {
+        ident: String,
+    },
 }
 
 impl fmt::Display for EvalErrorKind {
@@ -41,6 +44,7 @@ impl fmt::Display for EvalErrorKind {
             EvalErrorKind::UnknownPrefixOperator { op, right } => {
                 write!(f, "unknown prefix operator; {}{}", op, right.obj_type())
             }
+            EvalErrorKind::UncaughtRef { ident } => write!(f, "identifier not found: {}", ident),
         }
     }
 }
