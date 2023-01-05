@@ -1,23 +1,22 @@
 use std::fmt;
 
 use rmonkey_ast::operator::{Infix, Prefix};
-use rmonkey_object::Object;
 
 #[derive(Debug)]
 pub enum EvalErrorKind {
     TypeMismatch {
         op: Infix,
-        left: Object,
-        right: Object,
+        left: String,
+        right: String,
     },
     UnknownInfixOperator {
         op: Infix,
-        left: Object,
-        right: Object,
+        left: String,
+        right: String,
     },
     UnknownPrefixOperator {
         op: Prefix,
-        right: Object,
+        right: String,
     },
     UncaughtRef {
         ident: String,
@@ -27,22 +26,14 @@ pub enum EvalErrorKind {
 impl fmt::Display for EvalErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EvalErrorKind::TypeMismatch { op, left, right } => write!(
-                f,
-                "type mismatch: {} {} {}",
-                left.obj_type(),
-                op,
-                right.obj_type()
-            ),
-            EvalErrorKind::UnknownInfixOperator { op, left, right } => write!(
-                f,
-                "unknown operator: {} {} {}",
-                left.obj_type(),
-                op,
-                right.obj_type()
-            ),
+            EvalErrorKind::TypeMismatch { op, left, right } => {
+                write!(f, "type mismatch: {} {} {}", left, op, right)
+            }
+            EvalErrorKind::UnknownInfixOperator { op, left, right } => {
+                write!(f, "unknown operator: {} {} {}", left, op, right)
+            }
             EvalErrorKind::UnknownPrefixOperator { op, right } => {
-                write!(f, "unknown prefix operator; {}{}", op, right.obj_type())
+                write!(f, "unknown prefix operator; {}{}", op, right)
             }
             EvalErrorKind::UncaughtRef { ident } => write!(f, "identifier not found: {}", ident),
         }

@@ -1,8 +1,11 @@
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
+use builtin::len;
 use rmonkey_ast::{Expr, Stmt};
+use rmonkey_error::Result;
 use scope::Scope;
 
+mod builtin;
 pub mod scope;
 
 #[derive(Debug, Clone)]
@@ -11,6 +14,9 @@ pub enum Object {
     Bool(bool),
     Null,
     String(String),
+    BuiltIn {
+        func: fn(Vec<Object>) -> Result<Object>,
+    },
     ReturnValue(Box<Object>),
     Func {
         params: Vec<Expr>,
@@ -28,6 +34,7 @@ impl Object {
             Object::ReturnValue(_) => "RETURN_VALUE",
             Object::Func { .. } => "FUNCTION",
             Object::String(_) => "STRING",
+            Object::BuiltIn { .. } => "Builtin",
         }
     }
 }
@@ -53,6 +60,13 @@ impl fmt::Display for Object {
                     )
                 }
             }
+            Object::BuiltIn { .. } => write!(f, "[builtin func]"),
         }
     }
+}
+
+pub fn builtins() -> HashMap<&'static str, Object> {
+    let mut builtin: HashMap<&'static str, Object> = HashMap::new();
+    builtin.insert("len", Object::BuiltIn { func: len });
+    builtin
 }

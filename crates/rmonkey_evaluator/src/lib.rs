@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
 use rmonkey_ast::{
@@ -5,17 +6,20 @@ use rmonkey_ast::{
     Expr, Program, Stmt,
 };
 use rmonkey_error::{eval_error::EvalErrorKind, RMonkeyError, Result};
+use rmonkey_object::builtins;
 use rmonkey_object::{scope::Scope, Object};
 
 #[derive(Debug, Default)]
 pub struct Evaluator {
     env: Rc<RefCell<Scope>>,
+    builtin: Rc<RefCell<HashMap<&'static str, Object>>>,
 }
 
 impl Evaluator {
     pub fn new() -> Self {
         Evaluator {
             env: Rc::new(RefCell::new(Scope::new())),
+            builtin: Rc::new(RefCell::new(builtins())),
         }
     }
 
@@ -86,12 +90,16 @@ impl Evaluator {
 
     fn eval_ident(&self, ident: &String) -> Result<Object> {
         if let Some(val) = self.get(&ident.to_string()) {
-            Ok(val)
-        } else {
-            Err(RMonkeyError::EvalError(EvalErrorKind::UncaughtRef {
-                ident: ident.to_string(),
-            }))
+            return Ok(val);
         }
+
+        if let Some(builtin) = self.builtin.borrow_mut().get(ident.as_str()) {
+            return Ok(builtin.clone());
+        }
+
+        Err(RMonkeyError::EvalError(EvalErrorKind::UncaughtRef {
+            ident: ident.to_string(),
+        }))
     }
 
     fn eval_prefix_expr(&mut self, op: &Prefix, right: &Expr) -> Result<Object> {
@@ -117,7 +125,7 @@ impl Evaluator {
             Err(RMonkeyError::EvalError(
                 rmonkey_error::eval_error::EvalErrorKind::UnknownPrefixOperator {
                     op: Prefix::Minus,
-                    right,
+                    right: right.obj_type().to_owned(),
                 },
             ))
         }
@@ -136,8 +144,8 @@ impl Evaluator {
                 _ => Err(RMonkeyError::EvalError(
                     EvalErrorKind::UnknownInfixOperator {
                         op: op.clone(),
-                        left,
-                        right,
+                        left: left.obj_type().to_owned(),
+                        right: right.obj_type().to_owned(),
                     },
                 )),
             },
@@ -146,8 +154,8 @@ impl Evaluator {
                 _ => Err(RMonkeyError::EvalError(
                     EvalErrorKind::UnknownInfixOperator {
                         op: op.clone(),
-                        left,
-                        right,
+                        left: left.obj_type().to_owned(),
+                        right: right.obj_type().to_owned(),
                     },
                 )),
             },
@@ -155,15 +163,15 @@ impl Evaluator {
                 if left.obj_type() != right.obj_type() {
                     Err(RMonkeyError::EvalError(EvalErrorKind::TypeMismatch {
                         op: op.clone(),
-                        left,
-                        right,
+                        left: left.obj_type().to_owned(),
+                        right: right.obj_type().to_owned(),
                     }))
                 } else {
                     Err(RMonkeyError::EvalError(
                         EvalErrorKind::UnknownInfixOperator {
                             op: op.clone(),
-                            left,
-                            right,
+                            left: left.obj_type().to_owned(),
+                            right: right.obj_type().to_owned(),
                         },
                     ))
                 }
@@ -249,10 +257,14 @@ impl Evaluator {
             if let Object::ReturnValue(value) = result {
                 return Ok(*value);
             }
-            Ok(result)
-        } else {
-            Err(RMonkeyError::Custom("".to_string()))
+            return Ok(result);
         }
+
+        if let Object::BuiltIn { func } = callee {
+            return func(args);
+        }
+
+        Err(RMonkeyError::Custom("".to_string()))
     }
 
     /// create child scope and bind params name and actual given arg value.
@@ -264,6 +276,7 @@ impl Evaluator {
     ) -> Evaluator {
         let function_env = Evaluator {
             env: Rc::new(RefCell::new(parent_scope)),
+            builtin: Rc::clone(&self.builtin),
         };
         // bind param and actual given arg.
         for (ident, arg) in params.iter().zip(args.iter()) {
@@ -442,6 +455,33 @@ mod tests {
             let program = p.parse_program().unwrap();
             let r = e.eval(program).unwrap();
             assert_eq!(r.to_string(), *expected)
+        }
+    }
+
+    #[test]
+    fn test_builtin_string_len() {
+        let case = [
+            (r#"len("")"#, "0"),
+            (r#"len("four")"#, "4"),
+            (r#"len("hello world")"#, "11"),
+            (
+                r#"len(1)"#,
+                "custom error: arg to `len` not supported, got INTEGER",
+            ),
+            (
+                r#"len("one", "two")"#,
+                "custom error: wrong number of args. got=2, want=1",
+            ),
+        ];
+        for (input, expected) in case.iter() {
+            let mut e = Evaluator::new();
+            let l = Lexer::new(input);
+            let mut p = Parser::new(l);
+            let program = p.parse_program().unwrap();
+            match e.eval(program) {
+                Ok(r) => assert_eq!(r.to_string(), *expected),
+                Err(e) => assert_eq!(e.to_string(), *expected),
+            }
         }
     }
 }
