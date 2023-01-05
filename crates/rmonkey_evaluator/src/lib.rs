@@ -85,8 +85,18 @@ impl Evaluator {
             Expr::InfixExpr { left, right, op } => Ok(self.eval_infix_expr(op, left, right)?),
             Expr::Func { params, body } => Ok(self.eval_func_literal(body, params)?),
             Expr::Call { callee, args } => Ok(self.eval_call_expr(callee, args)?),
-            Expr::Array { elements } => todo!(),
-            Expr::IndexExpr { left, index } => todo!(),
+            Expr::Array { elements } => {
+                let mut elems: Vec<Object> = Vec::new();
+                for e in elements.iter() {
+                    elems.push(self.eval_expr(e)?);
+                }
+                Ok(Object::Array { elements: elems })
+            }
+            Expr::IndexExpr { left, index } => {
+                let left = self.eval_expr(left)?;
+                let index = self.eval_expr(index)?;
+                self.eval_index_expr(left, index)
+            }
         }
     }
 
@@ -291,6 +301,28 @@ impl Evaluator {
         }
         function_env
     }
+
+    fn eval_index_expr(&mut self, left: Object, index: Object) -> Result<Object> {
+        match (left, index) {
+            (Object::Array { elements }, Object::Int(val)) => {
+                self.eval_array_index_expr(elements, val)
+            }
+            _ => todo!(),
+        }
+    }
+
+    fn eval_array_index_expr(&mut self, arr: Vec<Object>, index: i64) -> Result<Object> {
+        let max = arr.len() as i64;
+
+        if index < 0 || index > max {
+            return Ok(Object::Null);
+        }
+
+        if let Some(array_val) = arr.get(index as usize) {
+            return Ok(array_val.clone());
+        }
+        unreachable!()
+    }
 }
 
 #[cfg(test)]
@@ -474,6 +506,42 @@ mod tests {
                 r#"len("one", "two")"#,
                 "custom error: wrong number of args. got=2, want=1",
             ),
+        ];
+        for (input, expected) in case.iter() {
+            let mut e = Evaluator::new();
+            let l = Lexer::new(input);
+            let mut p = Parser::new(l);
+            let program = p.parse_program().unwrap();
+            match e.eval(program) {
+                Ok(r) => assert_eq!(r.to_string(), *expected),
+                Err(e) => assert_eq!(e.to_string(), *expected),
+            }
+        }
+    }
+
+    #[test]
+    fn test_array_literal() {
+        let case = [(r#"[1, 2 * 2, 3 + 3]"#, "[1, 4, 6]")];
+        for (input, expected) in case.iter() {
+            let mut e = Evaluator::new();
+            let l = Lexer::new(input);
+            let mut p = Parser::new(l);
+            let program = p.parse_program().unwrap();
+            match e.eval(program) {
+                Ok(r) => assert_eq!(r.to_string(), *expected),
+                Err(e) => assert_eq!(e.to_string(), *expected),
+            }
+        }
+    }
+
+    #[test]
+    fn test_index_literal() {
+        let case = [
+            (r#"[1, 2, 3][0]"#, "1"),
+            (r#"[1, 2, 3][1]"#, "2"),
+            (r#"[1, 2, 3][2]"#, "2"),
+            ("let myArray = [1, 2, 3]; myArray[2];", "3"),
+            ("[1, 2, 3][3]", "null"),
         ];
         for (input, expected) in case.iter() {
             let mut e = Evaluator::new();

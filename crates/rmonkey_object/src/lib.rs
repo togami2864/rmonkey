@@ -23,6 +23,9 @@ pub enum Object {
         body: Stmt,
         scope: Scope,
     },
+    Array {
+        elements: Vec<Object>,
+    },
 }
 
 impl Object {
@@ -34,6 +37,7 @@ impl Object {
             Object::ReturnValue(_) => "RETURN_VALUE",
             Object::Func { .. } => "FUNCTION",
             Object::String(_) => "STRING",
+            Object::Array { .. } => "ARRAY",
             Object::BuiltIn { .. } => "Builtin",
         }
     }
@@ -61,6 +65,14 @@ impl fmt::Display for Object {
                 }
             }
             Object::BuiltIn { .. } => write!(f, "[builtin func]"),
+            Object::Array { elements } => {
+                if elements.is_empty() {
+                    write!(f, "[]")
+                } else {
+                    let elems: Vec<String> = elements.iter().map(|p| p.to_string()).collect();
+                    write!(f, "[{}]", elems.join(", ").trim_end_matches(", "),)
+                }
+            }
         }
     }
 }
