@@ -1,11 +1,10 @@
-use std::{collections::HashMap, fmt};
+use std::fmt;
 
-use builtin::len;
 use rmonkey_ast::{Expr, Stmt};
 use rmonkey_error::Result;
 use scope::Scope;
 
-mod builtin;
+pub mod builtin;
 pub mod scope;
 
 #[derive(Debug, Clone)]
@@ -75,10 +74,4 @@ impl fmt::Display for Object {
             }
         }
     }
-}
-
-pub fn builtins() -> HashMap<&'static str, Object> {
-    let mut builtin: HashMap<&'static str, Object> = HashMap::new();
-    builtin.insert("len", Object::BuiltIn { func: len });
-    builtin
 }

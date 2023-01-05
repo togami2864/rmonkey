@@ -6,7 +6,7 @@ use rmonkey_ast::{
     Expr, Program, Stmt,
 };
 use rmonkey_error::{eval_error::EvalErrorKind, RMonkeyError, Result};
-use rmonkey_object::builtins;
+use rmonkey_object::builtin::builtins;
 use rmonkey_object::{scope::Scope, Object};
 
 #[derive(Debug, Default)]
@@ -321,7 +321,7 @@ impl Evaluator {
         if let Some(array_val) = arr.get(index as usize) {
             return Ok(array_val.clone());
         }
-        unreachable!()
+        Ok(Object::Null)
     }
 }
 
@@ -539,9 +539,37 @@ mod tests {
         let case = [
             (r#"[1, 2, 3][0]"#, "1"),
             (r#"[1, 2, 3][1]"#, "2"),
-            (r#"[1, 2, 3][2]"#, "2"),
+            (r#"[1, 2, 3][2]"#, "3"),
             ("let myArray = [1, 2, 3]; myArray[2];", "3"),
             ("[1, 2, 3][3]", "null"),
+        ];
+        for (input, expected) in case.iter() {
+            let mut e = Evaluator::new();
+            let l = Lexer::new(input);
+            let mut p = Parser::new(l);
+            let program = p.parse_program().unwrap();
+            match e.eval(program) {
+                Ok(r) => assert_eq!(r.to_string(), *expected),
+                Err(e) => assert_eq!(e.to_string(), *expected),
+            }
+        }
+    }
+    #[test]
+    fn test_buitin() {
+        let case = [
+            (r#"len([1, 2, 3])"#, "3"),
+            (r#"first([1, 2, 3])"#, "1"),
+            (r#"last([1, 2, 3])"#, "3"),
+            (r#"rest([1, 2, 3])"#, "[2, 3]"),
+            (r#"push([1, 2, 3], 4)"#, "[1, 2, 3, 4]"),
+            (
+                r#"let map = fn(arr, f) {let iter = fn(arr, accumulated) {if (len(arr) == 0) { accumulated} else {iter(rest(arr), push(accumulated, f(first(arr)))); }};iter(arr, []); }; let a = [1, 2, 3, 4]; let double = fn(x) { x * 2 };  map(a, double); "#,
+                "[2, 4, 6, 8]",
+            ),
+            (
+                r#"let reduce = fn(arr, initial, f) { let iter = fn(arr, result) {if (len(arr) == 0) { result} else {iter(rest(arr), f(result, first(arr))); }};iter(arr, initial); };let sum = fn(arr) {reduce(arr, 0, fn(initial, el) { initial + el });}; sum([1, 2, 3, 4, 5]);"#,
+                "15",
+            ),
         ];
         for (input, expected) in case.iter() {
             let mut e = Evaluator::new();
