@@ -10,6 +10,7 @@ pub enum Object {
     Int(i64),
     Bool(bool),
     Null,
+    String(String),
     ReturnValue(Box<Object>),
     Func {
         params: Vec<Expr>,
@@ -26,6 +27,7 @@ impl Object {
             Object::Null => "NULL",
             Object::ReturnValue(_) => "RETURN_VALUE",
             Object::Func { .. } => "FUNCTION",
+            Object::String(_) => "STRING",
         }
     }
 }
@@ -36,6 +38,7 @@ impl fmt::Display for Object {
             Object::Int(val) => write!(f, "{}", val),
             Object::Bool(val) => write!(f, "{}", val),
             Object::Null => write!(f, "null"),
+            Object::String(val) => write!(f, "\"{}\"", val),
             Object::ReturnValue(obj) => write!(f, "return {}", obj),
             Object::Func { params, body, .. } => {
                 if params.is_empty() {

@@ -71,6 +71,7 @@ impl<'a> Lexer<'a> {
             '<' => Token::Lt,
             '{' => Token::LBrace,
             '}' => Token::RBrace,
+            '"' => self.read_string(),
             '\u{0}' => Token::Eof,
             c => {
                 if is_letter(c) {
@@ -110,6 +111,15 @@ impl<'a> Lexer<'a> {
         }
         let value_i64 = value.parse::<i64>().unwrap();
         Token::Int(value_i64)
+    }
+
+    fn read_string(&mut self) -> Token {
+        self.read_char();
+        let mut value = String::new();
+        while self.cur != '"' {
+            value.push(self.read_char());
+        }
+        Token::String(value)
     }
 }
 
@@ -297,6 +307,31 @@ mod tests {
             (Token::NotEq, "!="),
             (Token::Int(9), "9"),
             (Token::Semicolon, ";"),
+            (Token::Eof, "Eof"),
+        ];
+
+        let mut l = Lexer::new(input);
+        for (exp, exp_literal) in tests.iter() {
+            let token = l.next_token();
+            if token != *exp {
+                panic!(
+                    "assertion failed at {} => left: {}, right: {}",
+                    l.cur, token, exp
+                );
+            }
+            assert_eq!(token.to_string(), *exp_literal);
+        }
+    }
+
+    #[test]
+    fn test_string() {
+        let input = r#"
+        "foobar"
+        "foo bar"
+        "#;
+        let tests = [
+            (Token::String("foobar".to_owned()), r#"foobar"#),
+            (Token::String("foo bar".to_owned()), r#"foo bar"#),
             (Token::Eof, "Eof"),
         ];
 

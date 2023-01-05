@@ -71,6 +71,7 @@ impl Evaluator {
             Expr::Ident(val) => Ok(self.eval_ident(val)?),
             Expr::IntLiteral(val) => Ok(Object::Int(*val)),
             Expr::BoolLiteral(val) => Ok(Object::Bool(*val)),
+            Expr::StringLiteral(val) => Ok(Object::String(val.to_owned())),
             Expr::If {
                 condition,
                 consequence,
@@ -399,6 +400,7 @@ mod tests {
             ("let a = 5 * 5; a;", "25"),
             ("let a = 5; let b = a; b;", "5"),
             ("let a = 5; let b = a; let c = a + b + 5; c;", "15"),
+            (r#"let hello = "world"; hello"#, "\"world\""),
         ];
         for (input, expected) in case.iter() {
             let mut e = Evaluator::new();

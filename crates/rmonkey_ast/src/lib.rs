@@ -42,6 +42,7 @@ pub enum Expr {
     Ident(String),
     IntLiteral(i64),
     BoolLiteral(bool),
+    StringLiteral(String),
     If {
         condition: Box<Expr>,
         consequence: Box<Stmt>,
@@ -72,6 +73,7 @@ impl fmt::Display for Expr {
             Expr::Ident(val) => write!(f, "{}", val),
             Expr::IntLiteral(val) => write!(f, "{}", val),
             Expr::BoolLiteral(val) => write!(f, "{}", val),
+            Expr::StringLiteral(val) => write!(f, "\"{}\"", val),
             Expr::If {
                 condition,
                 consequence,

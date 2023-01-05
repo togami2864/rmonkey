@@ -152,6 +152,7 @@ impl<'a> Parser<'a> {
             Token::Ident(val) => self.parse_identifier(val.to_owned())?,
             Token::Int(val) => self.parse_integer_literal(val.to_owned())?,
             Token::True | Token::False => self.parse_bool_literal()?,
+            Token::String(val) => self.parse_string_literal(val.to_owned())?,
             Token::Bang | Token::Minus => self.parse_prefix_expr()?,
             Token::LParen => self.parse_grouped_expr()?,
             Token::If => self.parse_if_expr()?,
@@ -184,6 +185,10 @@ impl<'a> Parser<'a> {
     fn parse_bool_literal(&mut self) -> Result<Expr> {
         let bool = self.cur_token_is(Token::True);
         Ok(Expr::BoolLiteral(bool))
+    }
+
+    fn parse_string_literal(&mut self, val: String) -> Result<Expr> {
+        Ok(Expr::StringLiteral(val))
     }
 
     fn parse_grouped_expr(&mut self) -> Result<Expr> {
@@ -415,6 +420,22 @@ mod tests {
         let program = p.parse_program().unwrap();
 
         assert_eq!(program.stmts.len(), 3);
+    }
+
+    #[test]
+    fn test_string_literal() {
+        let input = r#"
+        let foo = "foo";
+        let hello = "hello world";
+        "#;
+        let expected = vec![r#"let foo = "foo""#, r#"let hello = "hello world""#];
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program().unwrap();
+        assert_eq!(program.stmts.len(), expected.len());
+        for (i, p) in program.stmts.iter().enumerate() {
+            assert_eq!(p.to_string(), expected[i]);
+        }
     }
 
     #[test]

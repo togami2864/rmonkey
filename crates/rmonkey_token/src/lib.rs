@@ -8,6 +8,7 @@ pub enum Token {
     Eof,
     Ident(String),
     Int(i64),
+    String(String),
     Assign,
     Plus,
     Minus,
@@ -78,6 +79,7 @@ impl Token {
             Token::Return => "Return",
             Token::Eq => "Eq",
             Token::NotEq => "NotEq",
+            Token::String(_) => "STRING",
         }
     }
 }
@@ -89,6 +91,7 @@ impl fmt::Display for Token {
             Token::Eof => write!(f, "Eof"),
             Token::Ident(val) => write!(f, "{}", val),
             Token::Int(val) => write!(f, "{}", val),
+            Token::String(val) => write!(f, "{}", val),
             Token::Assign => write!(f, "="),
             Token::Plus => write!(f, "+"),
             Token::Comma => write!(f, ","),
