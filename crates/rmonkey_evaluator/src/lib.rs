@@ -85,6 +85,8 @@ impl Evaluator {
             Expr::InfixExpr { left, right, op } => Ok(self.eval_infix_expr(op, left, right)?),
             Expr::Func { params, body } => Ok(self.eval_func_literal(body, params)?),
             Expr::Call { callee, args } => Ok(self.eval_call_expr(callee, args)?),
+            Expr::Array { elements } => todo!(),
+            Expr::IndexExpr { left, index } => todo!(),
         }
     }
 

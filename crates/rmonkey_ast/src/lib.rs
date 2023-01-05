@@ -65,6 +65,13 @@ pub enum Expr {
         callee: Box<Expr>,
         args: Vec<Expr>,
     },
+    Array {
+        elements: Vec<Expr>,
+    },
+    IndexExpr {
+        left: Box<Expr>,
+        index: Box<Expr>,
+    },
 }
 
 impl fmt::Display for Expr {
@@ -107,6 +114,11 @@ impl fmt::Display for Expr {
                 let args: Vec<String> = args.iter().map(|a| a.to_string()).collect();
                 write!(f, "{}({})", callee, args.join(", ").trim_end_matches(", "))
             }
+            Expr::Array { elements } => {
+                let elems: Vec<String> = elements.iter().map(|e| e.to_string()).collect();
+                write!(f, "[{}]", elems.join(", ").trim_end_matches(", "))
+            }
+            Expr::IndexExpr { left, index } => write!(f, "({}[{}])", left, index),
         }
     }
 }

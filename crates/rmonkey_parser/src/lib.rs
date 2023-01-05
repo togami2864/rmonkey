@@ -157,6 +157,7 @@ impl<'a> Parser<'a> {
             Token::LParen => self.parse_grouped_expr()?,
             Token::If => self.parse_if_expr()?,
             Token::Function => self.parse_func_literal()?,
+            Token::LBracket => self.parse_array_literal()?,
             _ => {
                 return Err(RMonkeyError::Custom(
                     "failed to parse expression".to_string(),
@@ -168,6 +169,7 @@ impl<'a> Parser<'a> {
             self.next_token();
             left = match self.cur_token {
                 Token::LParen => self.parse_call_expr(left)?,
+                Token::LBracket => self.parse_index_expr(left)?,
                 _ => self.parse_infix_expr(left)?,
             }
         }
@@ -385,6 +387,54 @@ impl<'a> Parser<'a> {
             op,
         })
     }
+
+    fn parse_array_literal(&mut self) -> Result<Expr> {
+        let elements = self.parse_expr_list(Token::RBracket)?;
+        Ok(Expr::Array { elements })
+    }
+
+    fn parse_expr_list(&mut self, end: Token) -> Result<Vec<Expr>> {
+        if self.peek_token_is(end.clone()) {
+            self.next_token();
+            return Ok(Vec::new());
+        }
+
+        self.next_token();
+        let mut list: Vec<Expr> = Vec::new();
+        let first_expr = self.parse_expr(Precedence::Lowest)?;
+        list.push(first_expr);
+
+        while self.peek_token_is(Token::Comma) {
+            self.next_token();
+            self.next_token();
+            list.push(self.parse_expr(Precedence::Lowest)?)
+        }
+
+        if !self.expect_peek(end.clone()) {
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: end,
+                got: self.cur_token.clone(),
+            });
+        }
+
+        Ok(list)
+    }
+
+    fn parse_index_expr(&mut self, left: Expr) -> Result<Expr> {
+        self.next_token();
+        let index = self.parse_expr(Precedence::Lowest)?;
+
+        if !self.expect_peek(Token::RBracket) {
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: Token::RBracket,
+                got: self.cur_token.clone(),
+            });
+        }
+        Ok(Expr::IndexExpr {
+            left: Box::new(left),
+            index: Box::new(index),
+        })
+    }
 }
 
 #[cfg(test)]
@@ -529,6 +579,29 @@ mod tests {
             "((a + add((b * c))) + d)",
             "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
             "add((((a + b) + ((c * d) / f)) + g))",
+        ];
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program().unwrap();
+        assert_eq!(program.stmts.len(), expected.len());
+        for (i, p) in program.stmts.iter().enumerate() {
+            assert_eq!(p.to_string(), expected[i]);
+        }
+    }
+
+    #[test]
+    fn test_array_literal() {
+        let input = r#"
+        [1, 2 * 2, 3 + 3]
+        myArray[1 + 1]
+        a * [1, 2, 3, 4][b * c] * d
+        add(a * b[2], b[1], 2 * [1, 2][1])
+        "#;
+        let expected = vec![
+            "[1, (2 * 2), (3 + 3)]",
+            "(myArray[(1 + 1)])",
+            "((a * ([1, 2, 3, 4][(b * c)])) * d)",
+            "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
         ];
         let l = Lexer::new(input);
         let mut p = Parser::new(l);

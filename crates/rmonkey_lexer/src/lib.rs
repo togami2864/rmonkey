@@ -71,6 +71,8 @@ impl<'a> Lexer<'a> {
             '<' => Token::Lt,
             '{' => Token::LBrace,
             '}' => Token::RBrace,
+            '[' => Token::LBracket,
+            ']' => Token::RBracket,
             '"' => self.read_string(),
             '\u{0}' => Token::Eof,
             c => {
@@ -332,6 +334,34 @@ mod tests {
         let tests = [
             (Token::String("foobar".to_owned()), r#"foobar"#),
             (Token::String("foo bar".to_owned()), r#"foo bar"#),
+            (Token::Eof, "Eof"),
+        ];
+
+        let mut l = Lexer::new(input);
+        for (exp, exp_literal) in tests.iter() {
+            let token = l.next_token();
+            if token != *exp {
+                panic!(
+                    "assertion failed at {} => left: {}, right: {}",
+                    l.cur, token, exp
+                );
+            }
+            assert_eq!(token.to_string(), *exp_literal);
+        }
+    }
+
+    #[test]
+    fn test_array_literal() {
+        let input = r#"
+        [1, 2];
+        "#;
+        let tests = [
+            (Token::LBracket, "["),
+            (Token::Int(1), "1"),
+            (Token::Comma, ","),
+            (Token::Int(2), "2"),
+            (Token::RBracket, "]"),
+            (Token::Semicolon, ";"),
             (Token::Eof, "Eof"),
         ];
 
