@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
-use rmonkey_ast::precedence::Precedence;
 use rmonkey_ast::{
     operator::{Infix, Prefix},
     Expr, Program, Stmt,
@@ -309,6 +308,7 @@ impl Evaluator {
             (Object::Array { elements }, Object::Int(val)) => {
                 self.eval_array_index_expr(elements, val)
             }
+            (Object::Hash(pairs), ref index_obj) => self.eval_hash_index_expr(pairs, index_obj),
             _ => todo!(),
         }
     }
@@ -335,6 +335,17 @@ impl Evaluator {
             hash.insert(key, value);
         }
         Ok(Object::Hash(hash))
+    }
+
+    fn eval_hash_index_expr(
+        &mut self,
+        pairs: HashMap<Object, Object>,
+        index: &Object,
+    ) -> Result<Object> {
+        match pairs.get(index) {
+            Some(val) => Ok(val.clone()),
+            None => Ok(Object::Null),
+        }
     }
 }
 
@@ -600,6 +611,26 @@ mod tests {
     #[test]
     fn test_hash_string() {
         let case = [(r#"{"one": 10 - 9, "two": 5}"#, r#"{"one": 1, "two": 5}"#)];
+        for (input, expected) in case.iter() {
+            let mut e = Evaluator::new();
+            let l = Lexer::new(input);
+            let mut p = Parser::new(l);
+            let program = p.parse_program().unwrap();
+            match e.eval(program) {
+                Ok(r) => assert_eq!(r.to_string(), *expected),
+                Err(e) => assert_eq!(e.to_string(), *expected),
+            }
+        }
+    }
+
+    #[test]
+    fn test_hash_index_access() {
+        let case = [
+            (r#"let bob = {"one": 10 - 9, "two": 5}; bob["one"];"#, "1"),
+            (r#"{"foo": 5}["foo"]"#, "5"),
+            (r#"{"foo": 5}["bar"]"#, "null"),
+            (r#"{}["bar"]"#, "null"),
+        ];
         for (input, expected) in case.iter() {
             let mut e = Evaluator::new();
             let l = Lexer::new(input);
