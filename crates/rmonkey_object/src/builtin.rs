@@ -32,7 +32,7 @@ pub fn len(args: Vec<Object>) -> Result<Object> {
                 )))
             }
         },
-        None => todo!(),
+        None => Ok(Object::Null),
     }
 }
 

@@ -4,6 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
+members=[
+    "crates/rmonkey_ast",
+    "crates/rmonkey_evaluator",
+    "crates/rmonkey_object",
+    "crates/rmonkey_token",
+    "crates/rmonkey_error",
+    "crates/rmonkey_lexer",
+    "crates/rmonkey_parser"
+]
 
 [dependencies]
 rmonkey_token = {path = "./crates/rmonkey_token/"}
