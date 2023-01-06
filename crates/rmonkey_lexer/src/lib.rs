@@ -73,6 +73,7 @@ impl<'a> Lexer<'a> {
             '}' => Token::RBrace,
             '[' => Token::LBracket,
             ']' => Token::RBracket,
+            ':' => Token::Colon,
             '"' => self.read_string(),
             '\u{0}' => Token::Eof,
             c => {
@@ -362,6 +363,33 @@ mod tests {
             (Token::Int(2), "2"),
             (Token::RBracket, "]"),
             (Token::Semicolon, ";"),
+            (Token::Eof, "Eof"),
+        ];
+
+        let mut l = Lexer::new(input);
+        for (exp, exp_literal) in tests.iter() {
+            let token = l.next_token();
+            if token != *exp {
+                panic!(
+                    "assertion failed at {} => left: {}, right: {}",
+                    l.cur, token, exp
+                );
+            }
+            assert_eq!(token.to_string(), *exp_literal);
+        }
+    }
+
+    #[test]
+    fn test_hash_literal() {
+        let input = r#"
+        {"foo": "bar"}
+        "#;
+        let tests = [
+            (Token::LBrace, "{"),
+            (Token::String("foo".to_owned()), "foo"),
+            (Token::Colon, ":"),
+            (Token::String("bar".to_owned()), "bar"),
+            (Token::RBrace, "}"),
             (Token::Eof, "Eof"),
         ];
 

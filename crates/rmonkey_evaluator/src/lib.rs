@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
+use rmonkey_ast::precedence::Precedence;
 use rmonkey_ast::{
     operator::{Infix, Prefix},
     Expr, Program, Stmt,
@@ -97,6 +98,7 @@ impl Evaluator {
                 let index = self.eval_expr(index)?;
                 self.eval_index_expr(left, index)
             }
+            Expr::HashLiteral { pairs } => self.eval_hash_literal(pairs.to_vec()),
         }
     }
 
@@ -322,6 +324,17 @@ impl Evaluator {
             return Ok(array_val.clone());
         }
         Ok(Object::Null)
+    }
+
+    fn eval_hash_literal(&mut self, pairs: Vec<(Expr, Expr)>) -> Result<Object> {
+        let mut hash: HashMap<Object, Object> = HashMap::new();
+        for (key, val) in pairs.iter() {
+            let key = self.eval_expr(key)?;
+            let value = self.eval_expr(val)?;
+
+            hash.insert(key, value);
+        }
+        Ok(Object::Hash(hash))
     }
 }
 
@@ -554,6 +567,7 @@ mod tests {
             }
         }
     }
+
     #[test]
     fn test_buitin() {
         let case = [
@@ -571,6 +585,21 @@ mod tests {
                 "15",
             ),
         ];
+        for (input, expected) in case.iter() {
+            let mut e = Evaluator::new();
+            let l = Lexer::new(input);
+            let mut p = Parser::new(l);
+            let program = p.parse_program().unwrap();
+            match e.eval(program) {
+                Ok(r) => assert_eq!(r.to_string(), *expected),
+                Err(e) => assert_eq!(e.to_string(), *expected),
+            }
+        }
+    }
+
+    #[test]
+    fn test_hash_string() {
+        let case = [(r#"{"one": 10 - 9, "two": 5}"#, r#"{"one": 1, "two": 5}"#)];
         for (input, expected) in case.iter() {
             let mut e = Evaluator::new();
             let l = Lexer::new(input);

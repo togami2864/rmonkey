@@ -158,6 +158,7 @@ impl<'a> Parser<'a> {
             Token::If => self.parse_if_expr()?,
             Token::Function => self.parse_func_literal()?,
             Token::LBracket => self.parse_array_literal()?,
+            Token::LBrace => self.parse_hash_literal()?,
             _ => {
                 return Err(RMonkeyError::Custom(
                     "failed to parse expression".to_string(),
@@ -435,6 +436,42 @@ impl<'a> Parser<'a> {
             index: Box::new(index),
         })
     }
+
+    fn parse_hash_literal(&mut self) -> Result<Expr> {
+        let mut pairs: Vec<(Expr, Expr)> = Vec::new();
+        while !self.peek_token_is(Token::RBrace) {
+            self.next_token();
+            let key = self.parse_expr(Precedence::Lowest)?;
+
+            if !self.expect_peek(Token::Colon) {
+                return Err(RMonkeyError::UnexpectedToken {
+                    expected: Token::Colon,
+                    got: self.cur_token.clone(),
+                });
+            }
+
+            self.next_token();
+            let value = self.parse_expr(Precedence::Lowest)?;
+
+            pairs.push((key, value));
+
+            if !self.peek_token_is(Token::RBrace) && !self.expect_peek(Token::Comma) {
+                return Err(RMonkeyError::UnexpectedToken {
+                    expected: Token::Colon,
+                    got: self.cur_token.clone(),
+                });
+            }
+        }
+
+        if !self.expect_peek(Token::RBrace) {
+            return Err(RMonkeyError::UnexpectedToken {
+                expected: Token::RBrace,
+                got: self.cur_token.clone(),
+            });
+        }
+
+        Ok(Expr::HashLiteral { pairs })
+    }
 }
 
 #[cfg(test)]
@@ -602,6 +639,27 @@ mod tests {
             "(myArray[(1 + 1)])",
             "((a * ([1, 2, 3, 4][(b * c)])) * d)",
             "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
+        ];
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program().unwrap();
+        assert_eq!(program.stmts.len(), expected.len());
+        for (i, p) in program.stmts.iter().enumerate() {
+            assert_eq!(p.to_string(), expected[i]);
+        }
+    }
+
+    #[test]
+    fn test_hash_literal() {
+        let input = r#"
+        {"one": 1, "two": 2, "three": 3}
+        {}
+        {"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}
+        "#;
+        let expected = vec![
+            r#"{"one": 1, "two": 2, "three": 3}"#,
+            "{}",
+            r#"{"one": (0 + 1), "two": (10 - 8), "three": (15 / 5)}"#,
         ];
         let l = Lexer::new(input);
         let mut p = Parser::new(l);

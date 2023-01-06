@@ -34,6 +34,7 @@ pub enum Token {
     Return,
     Eq,
     NotEq,
+    Colon,
 }
 
 impl Token {
@@ -85,6 +86,7 @@ impl Token {
             Token::Eq => "Eq",
             Token::NotEq => "NotEq",
             Token::String(_) => "STRING",
+            Token::Colon => "Colon",
         }
     }
 }
@@ -122,6 +124,7 @@ impl fmt::Display for Token {
             Token::Return => write!(f, "return"),
             Token::Eq => write!(f, "=="),
             Token::NotEq => write!(f, "!="),
+            Token::Colon => write!(f, ":"),
         }
     }
 }

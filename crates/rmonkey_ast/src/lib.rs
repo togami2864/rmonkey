@@ -15,7 +15,7 @@ impl Program {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Stmt {
     LetStmt { name: Expr, value: Expr },
     ReturnStmt(Expr),
@@ -37,7 +37,7 @@ impl fmt::Display for Stmt {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Expr {
     Ident(String),
     IntLiteral(i64),
@@ -71,6 +71,9 @@ pub enum Expr {
     IndexExpr {
         left: Box<Expr>,
         index: Box<Expr>,
+    },
+    HashLiteral {
+        pairs: Vec<(Expr, Expr)>,
     },
 }
 
@@ -119,6 +122,13 @@ impl fmt::Display for Expr {
                 write!(f, "[{}]", elems.join(", ").trim_end_matches(", "))
             }
             Expr::IndexExpr { left, index } => write!(f, "({}[{}])", left, index),
+            Expr::HashLiteral { pairs } => {
+                let mut s: Vec<String> = Vec::new();
+                for (key, val) in pairs.iter() {
+                    s.push(format!("{}: {}", key, val));
+                }
+                write!(f, "{{{}}}", s.join(", "))
+            }
         }
     }
 }

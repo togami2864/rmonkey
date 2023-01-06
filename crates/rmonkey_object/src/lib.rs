@@ -1,13 +1,13 @@
-use std::fmt;
-
 use rmonkey_ast::{Expr, Stmt};
 use rmonkey_error::Result;
 use scope::Scope;
+use std::hash::Hash;
+use std::{collections::HashMap, fmt, hash::Hasher};
 
 pub mod builtin;
 pub mod scope;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Object {
     Int(i64),
     Bool(bool),
@@ -25,6 +25,19 @@ pub enum Object {
     Array {
         elements: Vec<Object>,
     },
+    Hash(HashMap<Object, Object>),
+}
+
+#[allow(clippy::derive_hash_xor_eq)]
+impl Hash for Object {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match *self {
+            Object::Int(ref i) => i.hash(state),
+            Object::Bool(ref b) => b.hash(state),
+            Object::String(ref s) => s.hash(state),
+            _ => "".hash(state),
+        }
+    }
 }
 
 impl Object {
@@ -37,7 +50,8 @@ impl Object {
             Object::Func { .. } => "FUNCTION",
             Object::String(_) => "STRING",
             Object::Array { .. } => "ARRAY",
-            Object::BuiltIn { .. } => "Builtin",
+            Object::BuiltIn { .. } => "BUILTIN",
+            Object::Hash(_) => "HASH",
         }
     }
 }
@@ -71,6 +85,13 @@ impl fmt::Display for Object {
                     let elems: Vec<String> = elements.iter().map(|p| p.to_string()).collect();
                     write!(f, "[{}]", elems.join(", ").trim_end_matches(", "),)
                 }
+            }
+            Object::Hash(pair) => {
+                let mut s: Vec<String> = Vec::new();
+                for (key, val) in pair.iter() {
+                    s.push(format!("{}: {}", key, val));
+                }
+                write!(f, "{{{}}}", s.join(", "))
             }
         }
     }

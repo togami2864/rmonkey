@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::Object;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Scope {
     pub store: HashMap<String, Object>,
     pub parent: Option<Rc<RefCell<Scope>>>,
