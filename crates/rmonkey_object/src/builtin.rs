@@ -10,6 +10,7 @@ pub fn builtins() -> HashMap<&'static str, Object> {
     builtin.insert("last", Object::BuiltIn { func: last });
     builtin.insert("rest", Object::BuiltIn { func: rest });
     builtin.insert("push", Object::BuiltIn { func: push });
+    builtin.insert("puts", Object::BuiltIn { func: puts });
     builtin
 }
 
@@ -133,4 +134,11 @@ pub fn push(args: Vec<Object>) -> Result<Object> {
         "argument to `push` must be ARRAY, got {}",
         obj.obj_type()
     )))
+}
+
+fn puts(args: Vec<Object>) -> Result<Object> {
+    for a in args.iter() {
+        println!("{}", a);
+    }
+    Ok(Object::Null)
 }
