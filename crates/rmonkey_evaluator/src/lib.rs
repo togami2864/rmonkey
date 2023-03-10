@@ -163,7 +163,7 @@ impl Evaluator {
                 )),
             },
             (Object::String(left_val), Object::String(right_val)) => match op {
-                Infix::Plus => Ok(Object::String(format!("{}{}", left_val, right_val))),
+                Infix::Plus => Ok(Object::String(format!("{left_val}{right_val}"))),
                 _ => Err(RMonkeyError::EvalError(
                     EvalErrorKind::UnknownInfixOperator {
                         op: op.clone(),

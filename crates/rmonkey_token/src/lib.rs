@@ -96,9 +96,9 @@ impl fmt::Display for Token {
         match self {
             Token::Illegal => write!(f, "Illegal"),
             Token::Eof => write!(f, "Eof"),
-            Token::Ident(val) => write!(f, "{}", val),
-            Token::Int(val) => write!(f, "{}", val),
-            Token::String(val) => write!(f, "{}", val),
+            Token::Ident(val) => write!(f, "{val}"),
+            Token::Int(val) => write!(f, "{val}"),
+            Token::String(val) => write!(f, "{val}"),
             Token::Assign => write!(f, "="),
             Token::Plus => write!(f, "+"),
             Token::Comma => write!(f, ","),

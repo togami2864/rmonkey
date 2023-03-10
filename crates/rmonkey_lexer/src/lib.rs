@@ -127,7 +127,7 @@ impl<'a> Lexer<'a> {
 }
 
 fn is_letter(ch: char) -> bool {
-    ('a'..='z').contains(&ch) || ('A'..='Z').contains(&ch) || ch == '_'
+    ch.is_ascii_lowercase() || ch.is_ascii_uppercase() || ch == '_'
 }
 
 #[cfg(test)]

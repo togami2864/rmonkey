@@ -28,7 +28,7 @@ pub enum Object {
     Hash(HashMap<Object, Object>),
 }
 
-#[allow(clippy::derive_hash_xor_eq)]
+#[allow(clippy::derived_hash_with_manual_eq)]
 impl Hash for Object {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match *self {
@@ -59,14 +59,14 @@ impl Object {
 impl fmt::Display for Object {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Object::Int(val) => write!(f, "{}", val),
-            Object::Bool(val) => write!(f, "{}", val),
+            Object::Int(val) => write!(f, "{val}"),
+            Object::Bool(val) => write!(f, "{val}"),
             Object::Null => write!(f, "null"),
-            Object::String(val) => write!(f, "\"{}\"", val),
-            Object::ReturnValue(obj) => write!(f, "return {}", obj),
+            Object::String(val) => write!(f, "\"{val}\""),
+            Object::ReturnValue(obj) => write!(f, "return {obj}"),
             Object::Func { params, body, .. } => {
                 if params.is_empty() {
-                    write!(f, "fn(){{{}}}", body)
+                    write!(f, "fn(){{{body}}}")
                 } else {
                     let params: Vec<String> = params.iter().map(|p| p.to_string()).collect();
                     write!(
@@ -89,7 +89,7 @@ impl fmt::Display for Object {
             Object::Hash(pair) => {
                 let mut s: Vec<String> = Vec::new();
                 for (key, val) in pair.iter() {
-                    s.push(format!("{}: {}", key, val));
+                    s.push(format!("{key}: {val}"));
                 }
                 write!(f, "{{{}}}", s.join(", "))
             }

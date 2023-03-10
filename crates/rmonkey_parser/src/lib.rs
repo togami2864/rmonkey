@@ -30,10 +30,10 @@ impl<'a> Parser<'a> {
         match self.parse_program() {
             Ok(p) => {
                 for p in p.stmts.iter() {
-                    println!("{:?}", p);
+                    println!("{p:?}");
                 }
             }
-            Err(err) => eprintln!("{}", err),
+            Err(err) => eprintln!("{err}"),
         }
     }
 

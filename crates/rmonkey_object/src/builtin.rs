@@ -26,7 +26,7 @@ pub fn len(args: Vec<Object>) -> Result<Object> {
             Object::String(val) => Ok(Object::Int(val.len() as i64)),
             Object::Array { elements } => Ok(Object::Int(elements.len() as i64)),
             _ => {
-                return Err(RMonkeyError::Custom(format!(
+                Err(RMonkeyError::Custom(format!(
                     "arg to `len` not supported, got {}",
                     obj.obj_type()
                 )))
@@ -138,7 +138,7 @@ pub fn push(args: Vec<Object>) -> Result<Object> {
 
 fn puts(args: Vec<Object>) -> Result<Object> {
     for a in args.iter() {
-        println!("{}", a);
+        println!("{a}");
     }
     Ok(Object::Null)
 }

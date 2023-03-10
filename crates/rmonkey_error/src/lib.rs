@@ -18,14 +18,13 @@ impl fmt::Display for RMonkeyError {
         match self {
             RMonkeyError::UnexpectedToken { expected, got } => write!(
                 f,
-                "unexpected token error: expected {}, but got {}",
-                expected, got
+                "unexpected token error: expected {expected}, but got {got}"
             ),
             RMonkeyError::InvalidPrefix { got } => {
-                write!(f, "invalid prefix: {} is invalid for prefix", got)
+                write!(f, "invalid prefix: {got} is invalid for prefix")
             }
-            RMonkeyError::Custom(msg) => write!(f, "custom error: {}", msg),
-            RMonkeyError::EvalError(err) => write!(f, "{}", err),
+            RMonkeyError::Custom(msg) => write!(f, "custom error: {msg}"),
+            RMonkeyError::EvalError(err) => write!(f, "{err}"),
         }
     }
 }

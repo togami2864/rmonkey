@@ -26,9 +26,9 @@ pub enum Stmt {
 impl fmt::Display for Stmt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Stmt::LetStmt { name, value } => write!(f, "let {} = {}", name, value),
-            Stmt::ReturnStmt(value) => write!(f, "return {}", value),
-            Stmt::ExprStmt(expr) => write!(f, "{}", expr),
+            Stmt::LetStmt { name, value } => write!(f, "let {name} = {value}"),
+            Stmt::ReturnStmt(value) => write!(f, "return {value}"),
+            Stmt::ExprStmt(expr) => write!(f, "{expr}"),
             Stmt::BlockStmt { stmts } => {
                 let stmts: Vec<String> = stmts.iter().map(|stmt| stmt.to_string()).collect();
                 write!(f, "{}", stmts.join("\n"))
@@ -80,27 +80,27 @@ pub enum Expr {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expr::Ident(val) => write!(f, "{}", val),
-            Expr::IntLiteral(val) => write!(f, "{}", val),
-            Expr::BoolLiteral(val) => write!(f, "{}", val),
-            Expr::StringLiteral(val) => write!(f, "\"{}\"", val),
+            Expr::Ident(val) => write!(f, "{val}"),
+            Expr::IntLiteral(val) => write!(f, "{val}"),
+            Expr::BoolLiteral(val) => write!(f, "{val}"),
+            Expr::StringLiteral(val) => write!(f, "\"{val}\""),
             Expr::If {
                 condition,
                 consequence,
                 alternative,
             } => match alternative {
                 Some(alt) => {
-                    write!(f, "if({}){{{}}}else{{{}}}", condition, consequence, alt)
+                    write!(f, "if({condition}){{{consequence}}}else{{{alt}}}")
                 }
                 None => {
-                    write!(f, "if({}){{{}}}", condition, consequence)
+                    write!(f, "if({condition}){{{consequence}}}")
                 }
             },
-            Expr::PrefixExpr { op, right } => write!(f, "({}{})", op, right),
-            Expr::InfixExpr { left, right, op } => write!(f, "({} {} {})", left, op, right),
+            Expr::PrefixExpr { op, right } => write!(f, "({op}{right})"),
+            Expr::InfixExpr { left, right, op } => write!(f, "({left} {op} {right})"),
             Expr::Func { params, body } => {
                 if params.is_empty() {
-                    return write!(f, "fn(){{{}}}", body);
+                    return write!(f, "fn(){{{body}}}");
                 }
                 let params: Vec<String> = params.iter().map(|p| p.to_string()).collect();
                 write!(
@@ -112,7 +112,7 @@ impl fmt::Display for Expr {
             }
             Expr::Call { callee, args } => {
                 if args.is_empty() {
-                    return write!(f, "{}()", callee);
+                    return write!(f, "{callee}()");
                 }
                 let args: Vec<String> = args.iter().map(|a| a.to_string()).collect();
                 write!(f, "{}({})", callee, args.join(", ").trim_end_matches(", "))
@@ -121,11 +121,11 @@ impl fmt::Display for Expr {
                 let elems: Vec<String> = elements.iter().map(|e| e.to_string()).collect();
                 write!(f, "[{}]", elems.join(", ").trim_end_matches(", "))
             }
-            Expr::IndexExpr { left, index } => write!(f, "({}[{}])", left, index),
+            Expr::IndexExpr { left, index } => write!(f, "({left}[{index}])"),
             Expr::HashLiteral { pairs } => {
                 let mut s: Vec<String> = Vec::new();
                 for (key, val) in pairs.iter() {
-                    s.push(format!("{}: {}", key, val));
+                    s.push(format!("{key}: {val}"));
                 }
                 write!(f, "{{{}}}", s.join(", "))
             }

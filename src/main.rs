@@ -53,7 +53,7 @@ fn main() {
                     }
                 }
             } else {
-                println!("no such a command: {}", val)
+                println!("no such a command: {val}")
             }
         }
 
@@ -77,8 +77,8 @@ fn main() {
                         let mut p = Parser::new(l);
                         let program = p.parse_program().unwrap();
                         match e.eval(program) {
-                            Ok(result) => println!("{}", result),
-                            Err(err) => eprintln!("{}", err),
+                            Ok(result) => println!("{result}"),
+                            Err(err) => eprintln!("{err}"),
                         }
                     }
                 }
