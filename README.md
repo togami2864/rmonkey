@@ -128,3 +128,6 @@ rest([0,1,2]) // => [1,2]
 ```
 push([0,1,2,3,4], 5)
 ```
+
+## Credits
+- [Writing Interpreter In Go](https://interpreterbook.com/)
