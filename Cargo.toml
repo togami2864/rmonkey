@@ -11,7 +11,8 @@ members=[
     "crates/rmonkey_token",
     "crates/rmonkey_error",
     "crates/rmonkey_lexer",
-    "crates/rmonkey_parser"
+    "crates/rmonkey_parser",
+    "crates/rmonkey_wasm",
 ]
 
 [dependencies]
