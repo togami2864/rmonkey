@@ -8,7 +8,11 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
   },
+  "dependencies": {
+    "rmonkey_wasm": "../crates/rmonkey_wasm/pkg"
+  },
   "devDependencies": {
-    "nuxt": "^3.4.1"
+    "nuxt": "^3.4.1",
+    "vite-plugin-wasm": "^3.2.2"
   }
 }

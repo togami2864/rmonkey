@@ -1,5 +1,6 @@
 dev:
-	cd playground && pnpm run dev
+	make build-wasm
+	cd playground && pnpm install && pnpm run dev
 
 build-web:
 	make build-wasm

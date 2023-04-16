@@ -1,9 +1,17 @@
 lockfileVersion: '6.0'
 
+dependencies:
+  rmonkey_wasm:
+    specifier: ../crates/rmonkey_wasm/pkg
+    version: link:../crates/rmonkey_wasm/pkg
+
 devDependencies:
   nuxt:
     specifier: ^3.4.1
     version: 3.4.1(@types/node@18.15.11)
+  vite-plugin-wasm:
+    specifier: ^3.2.2
+    version: 3.2.2(vite@4.2.1)
 
 packages:
 
@@ -4400,6 +4408,14 @@ packages:
       vscode-languageserver: 7.0.0
       vscode-languageserver-textdocument: 1.0.8
       vscode-uri: 3.0.7
+    dev: true
+
+  /vite-plugin-wasm@3.2.2(vite@4.2.1):
+    resolution: {integrity: sha512-cdbBUNR850AEoMd5nvLmnyeq63CSfoP1ctD/L2vLk/5+wsgAPlAVAzUK5nGKWO/jtehNlrSSHLteN+gFQw7VOA==}
+    peerDependencies:
+      vite: ^2 || ^3 || ^4
+    dependencies:
+      vite: 4.2.1(@types/node@18.15.11)
     dev: true
 
   /vite@4.2.1(@types/node@18.15.11):
