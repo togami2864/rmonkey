@@ -1,4 +1,5 @@
 # rmonkey
+![monkey_logo](https://user-images.githubusercontent.com/62130798/232291649-1ea790c4-2175-4a90-81b2-351dcc03bb3d.png)
 > Rust implementation of the programming language **Monkey** that lives in books
 
 ## Features
