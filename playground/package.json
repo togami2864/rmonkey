@@ -18,7 +18,9 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-vue": "^9.11.0",
+    "monaco-editor": "^0.37.1",
     "nuxt": "^3.4.1",
+    "nuxt-monaco-editor": "^1.2.2",
     "prettier": "^2.8.7",
     "vite-plugin-wasm": "^3.2.2"
   }

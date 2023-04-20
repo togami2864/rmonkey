@@ -1,7 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import wasm from "vite-plugin-wasm";
+import wasm from 'vite-plugin-wasm';
 export default defineNuxtConfig({
-  css: ["~/assets/reset.css"],
+  modules: ['nuxt-monaco-editor'],
+  css: ['~/assets/reset.css'],
   nitro: {
     experimental: {
       wasm: true,
