@@ -5,15 +5,31 @@
     </header>
     <MonacoEditor
       v-model="input"
+      @input="parse_code"
       class="editor"
-      :options="{ minimap: { enabled: false }, theme: 'vs-dark'}"
+      :options="{ minimap: { enabled: false }, theme: 'vs-dark' }"
     />
-    <div class="ast"></div>
+    <div class="ast">{{ ast }}</div>
     <div class="console">
       <p class="result">Result</p>
       <div class="log">
         <div class="output">
-          <p  v-for="(res, index) in results" :key="res.currentTime" v-bind:class="index === 0 ? 'eval__result highlight' : 'eval__result'"><span>{{index === 0 ? `[✨${res.currentTime}] ${res.duration ? res.duration.toFixed(4) : 0}ms`:`[⌚${res.currentTime}]`}}</span> <span>{{ res.res }}</span></p>
+          <p
+            v-for="(res, index) in results"
+            :key="res.currentTime"
+            v-bind:class="
+              index === 0 ? 'eval__result highlight' : 'eval__result'
+            "
+          >
+            <span>{{
+              index === 0
+                ? `[✨${res.currentTime}] ${
+                    res.duration ? res.duration.toFixed(4) : 0
+                  }ms`
+                : `[⌚${res.currentTime}]`
+            }}</span>
+            <span>{{ res.res }}</span>
+          </p>
         </div>
       </div>
     </div>
@@ -22,7 +38,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
-import { eval_rmonkey } from 'rmonkey_wasm';
+import { eval_rmonkey, code_to_ast } from 'rmonkey_wasm';
 
 const defaultMonkey = `let fibonacci = fn(x) {
   if (x == 0) {
@@ -38,7 +54,10 @@ const defaultMonkey = `let fibonacci = fn(x) {
 fibonacci(5);`;
 
 const input = ref(defaultMonkey);
-const results = reactive<{ res: string; currentTime: string, duration?: number }[]>([{res: "Welcome to rmokey🐒", currentTime: getCurrentTimeFormatted()}]);
+const ast = ref<string>(code_to_ast(defaultMonkey));
+const results = reactive<
+  { res: string; currentTime: string; duration?: number }[]
+>([{ res: 'Welcome to rmokey🐒', currentTime: getCurrentTimeFormatted() }]);
 
 function evalRMonkeyCode(value: string) {
   const start = performance.now();
@@ -46,10 +65,16 @@ function evalRMonkeyCode(value: string) {
   const end = performance.now();
 
   results.unshift({
-    res:evaluatedValue,
+    res: evaluatedValue,
     currentTime: getCurrentTimeFormatted(),
-    duration: end -start,
+    duration: end - start,
   });
+}
+
+function parse_code(e: Event) {
+  // @ts-ignore
+  const code = code_to_ast(e.target.value);
+  ast.value = code;
 }
 
 function getCurrentTimeFormatted() {
@@ -63,11 +88,14 @@ function getCurrentTimeFormatted() {
 
 onMounted(() => {
   document.addEventListener('keydown', (e) => {
-    if (e.key === 's' && (navigator.userAgent.match("Mac") ? e.metaKey : e.ctrlKey)) {
-      e.preventDefault()
+    if (
+      e.key === 's' &&
+      (navigator.userAgent.match('Mac') ? e.metaKey : e.ctrlKey)
+    ) {
+      e.preventDefault();
     }
-  })
-})
+  });
+});
 </script>
 
 <style scoped>
@@ -94,7 +122,7 @@ header {
   grid-area: 1 / 1 / 2 / 6;
   display: flex;
   justify-content: space-between;
-  border-bottom: 10px solid #15171F;
+  border-bottom: 10px solid #15171f;
 }
 .editor {
   grid-area: 2 / 1 / 5 / 2;
@@ -102,23 +130,25 @@ header {
   border-right: 1px solid white;
 }
 .ast {
-  background-color: #15171F;
+  background-color: #15171f;
+  color: white;
   grid-area: 2 / 2 / 5 / 3;
+  padding: 5px;
 }
 .console {
   padding: 20px 50px 30px 30px;
-  background-color: #15171F;
+  background-color: #15171f;
   grid-area: 5 / 1 / 6 / 3;
-  color: #7E7F7F;
+  color: #7e7f7f;
   max-height: 200px;
   min-height: 200px;
-  border-top: 1px solid #464A54;
+  border-top: 1px solid #464a54;
 }
 .log {
   height: calc(100% - 40px);
   scrollbar-base-color: white;
   max-width: 100vw;
-  overflow:auto ;
+  overflow: auto;
   overflow-anchor: none;
 }
 
@@ -128,7 +158,7 @@ footer {
 }
 
 .result {
-  color: #99999B;
+  color: #99999b;
   font-weight: bold;
   padding-bottom: 10px;
 }
@@ -152,11 +182,11 @@ footer {
 }
 
 .eval__result {
-  display:flex;
+  display: flex;
   justify-content: space-between;
 }
 
-.highlight{
+.highlight {
   color: lightgreen;
 }
 </style>
