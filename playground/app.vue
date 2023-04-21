@@ -21,7 +21,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { eval_rmonkey } from 'rmonkey_wasm';
 
 const defaultMonkey = `let fibonacci = fn(x) {
@@ -55,6 +55,14 @@ function getCurrentTimeFormatted() {
 
   return `${hours}:${minutes}:${seconds}`;
 }
+
+onMounted(() => {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 's' && (navigator.userAgent.match("Mac") ? e.metaKey : e.ctrlKey)) {
+      e.preventDefault()
+    }
+  })
+})
 </script>
 
 <style scoped>
