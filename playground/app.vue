@@ -1,7 +1,7 @@
 <template>
   <div class="app">
     <header>
-      <button class="button__run" @click="evalRMonkeyCode(input)">Run</button>
+      <button class="button__run" @click="evalRMonkeyCode(input)">▶ Run</button>
     </header>
     <MonacoEditor
       v-model="input"
@@ -13,7 +13,7 @@
       <p class="result">Result</p>
       <div class="log">
         <div class="output">
-          <p  v-for="(res, index) in results" :key="res.currentTime" v-bind:class="index === 0 ? 'eval__result highlight' : 'eval__result'"><span>[{{ res.currentTime }}]</span> <span>{{ res.res }}</span></p>
+          <p  v-for="(res, index) in results" :key="res.currentTime" v-bind:class="index === 0 ? 'eval__result highlight' : 'eval__result'"><span>{{index === 0 ? `[✨${res.currentTime}] ${res.duration ? res.duration.toFixed(4) : 0}ms`:`[⌚${res.currentTime}]`}}</span> <span>{{ res.res }}</span></p>
         </div>
       </div>
     </div>
@@ -38,12 +38,17 @@ const defaultMonkey = `let fibonacci = fn(x) {
 fibonacci(5);`;
 
 const input = ref(defaultMonkey);
-const results = reactive<{ res: string; currentTime: string }[]>([]);
+const results = reactive<{ res: string; currentTime: string, duration?: number }[]>([{res: "Welcome to rmokey🐒", currentTime: getCurrentTimeFormatted()}]);
 
 function evalRMonkeyCode(value: string) {
+  const start = performance.now();
+  const evaluatedValue = eval_rmonkey(value);
+  const end = performance.now();
+
   results.unshift({
-    res: eval_rmonkey(value),
+    res:evaluatedValue,
     currentTime: getCurrentTimeFormatted(),
+    duration: end -start,
   });
 }
 
