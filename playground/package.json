@@ -18,10 +18,23 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-vue": "^9.11.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.1",
     "monaco-editor": "^0.37.1",
     "nuxt": "^3.4.1",
     "nuxt-monaco-editor": "^1.2.2",
     "prettier": "^2.8.7",
     "vite-plugin-wasm": "^3.2.2"
+  },
+  "lint-staged": {
+    "*.{html,css,md,json,yaml}": "prettier --write",
+    "*.{js,ts,vue}": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
