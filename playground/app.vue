@@ -10,8 +10,6 @@
       :options="{ minimap: { enabled: false }, theme: 'vs-dark' }"
     />
 
-
-
     <div class="ast">{{ ast }}</div>
     <div class="console">
       <p class="result">Result</p>
