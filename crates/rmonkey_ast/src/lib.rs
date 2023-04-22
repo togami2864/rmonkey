@@ -1,10 +1,11 @@
 use std::fmt;
 
 use operator::{Infix, Prefix};
+use serde::Serialize;
 
 pub mod operator;
 pub mod precedence;
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Program {
     pub stmts: Vec<Stmt>,
 }
@@ -15,7 +16,7 @@ impl Program {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize)]
 pub enum Stmt {
     LetStmt { name: Expr, value: Expr },
     ReturnStmt(Expr),
@@ -37,7 +38,7 @@ impl fmt::Display for Stmt {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize)]
 pub enum Expr {
     Ident(String),
     IntLiteral(i64),

@@ -27,7 +27,10 @@ pub fn code_to_ast(code: &str) -> String {
     let mut p = Parser::new(l);
     let program = p.parse_program().map_err(|e| format!("{e}"));
     match program {
-        Ok(ast) => format!("{ast:?}"),
+        Ok(ast) => match serde_json::to_string(&ast) {
+            Ok(ast_json) => ast_json,
+            Err(err) => err.to_string(),
+        },
         Err(err) => err,
     }
 }

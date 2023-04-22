@@ -1,6 +1,8 @@
 use std::fmt;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize)]
 pub enum Prefix {
     Minus,
     Bang,
@@ -15,7 +17,7 @@ impl fmt::Display for Prefix {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub enum Infix {
     Eq,
     NotEq,

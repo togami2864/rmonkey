@@ -5,33 +5,33 @@
     </header>
     <MonacoEditor
       v-model="input"
-      @input="parse_code"
+      @input="parse_input_code"
       class="editor"
-      :options="{ minimap: { enabled: false }, theme: 'vs-dark' }"
+      :options="{ ...commonEditorConfig }"
     />
-
-    <div class="ast">{{ ast }}</div>
+    <MonacoEditor
+      v-model="ast"
+      class="ast"
+      :options="{
+        ...commonEditorConfig,
+        readOnly: true,
+      }"
+    />
     <div class="console">
-      <p class="result">Result</p>
-      <div class="log">
-        <div class="output">
-          <p
-            v-for="(res, index) in results"
-            :key="res.currentTime"
-            v-bind:class="
-              index === 0 ? 'eval__result highlight' : 'eval__result'
-            "
-          >
-            <span>{{
-              index === 0
-                ? `[✨${res.currentTime}] ${
-                    res.duration ? res.duration.toFixed(4) : 0
-                  }ms`
-                : `[⌚${res.currentTime}]`
-            }}</span>
-            <span>{{ res.res }}</span>
-          </p>
-        </div>
+      <p class="logHeader">Result</p>
+      <div class="logDisplay">
+        <p
+          v-for="(execData, index) in execResults"
+          :key="execData.currentTime"
+          v-bind:class="index === 0 ? 'logText highlight' : 'logText'"
+        >
+          <span>{{
+            index === 0
+              ? `[✨${execData.currentTime}] ${execData.duration.toFixed(4)}ms`
+              : `[⌚${execData.currentTime}]`
+          }}</span>
+          <span>{{ execData.execData }}</span>
+        </p>
       </div>
     </div>
   </div>
@@ -41,41 +41,65 @@
 import { ref, reactive, onMounted } from 'vue';
 import { eval_rmonkey, code_to_ast } from 'rmonkey_wasm';
 
+const commonEditorConfig = {
+  minimap: { enabled: false },
+  theme: 'vs-dark',
+};
+
 const defaultMonkey = `let fibonacci = fn(x) {
   if (x == 0) {
     0;
   } else {
     if (x == 1) {
       1;
-    } else {
+    }
+    else {
       fibonacci(x - 1) + fibonacci(x - 2);
     }
   }
 };
 fibonacci(5);`;
 
-const input = ref(defaultMonkey);
-const ast = ref<string>(code_to_ast(defaultMonkey));
-const results = reactive<
-  { res: string; currentTime: string; duration?: number }[]
->([{ res: 'Welcome to rmokey🐒', currentTime: getCurrentTimeFormatted() }]);
+const input = ref<string>(defaultMonkey);
+const ast = ref<string>(parse_code(defaultMonkey));
+const execResults = reactive<
+  { execData: string; currentTime: string; duration: number }[]
+>([
+  {
+    execData: 'Welcome to rmokey🐒',
+    currentTime: getCurrentTimeFormatted(),
+    duration: 0,
+  },
+]);
 
 function evalRMonkeyCode(value: string) {
   const start = performance.now();
   const evaluatedValue = eval_rmonkey(value);
   const end = performance.now();
 
-  results.unshift({
-    res: evaluatedValue,
+  execResults.unshift({
+    execData: evaluatedValue,
     currentTime: getCurrentTimeFormatted(),
     duration: end - start,
   });
 }
 
-function parse_code(e: Event) {
+function parse_input_code(e: Event) {
   // @ts-ignore
-  const code = code_to_ast(e.target.value);
-  ast.value = code;
+  const formattedJson = parse_code(e.target.value);
+  ast.value = formattedJson;
+}
+
+function parse_code(input: string): string {
+  const code = code_to_ast(input);
+  let json;
+  try {
+    json = JSON.parse(code);
+  } catch {
+    return code;
+  }
+  const formattedJson = JSON.stringify(json, null, 2);
+  return formattedJson;
 }
 
 function getCurrentTimeFormatted() {
@@ -100,10 +124,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.output {
-  display: flex;
-  flex-direction: column;
-}
 .container {
   background-color: white;
 }
@@ -136,6 +156,7 @@ header {
   grid-area: 2 / 2 / 5 / 3;
   padding: 5px;
 }
+
 .console {
   padding: 20px 50px 30px 30px;
   background-color: #15171f;
@@ -145,7 +166,16 @@ header {
   min-height: 200px;
   border-top: 1px solid #464a54;
 }
-.log {
+
+.logHeader {
+  color: #99999b;
+  font-weight: bold;
+  padding-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.logDisplay {
   height: calc(100% - 40px);
   scrollbar-base-color: white;
   max-width: 100vw;
@@ -153,15 +183,13 @@ header {
   overflow-anchor: none;
 }
 
-footer {
-  background-color: black;
-  grid-area: 6 / 1 / 7 / 3;
+.logText {
+  display: flex;
+  justify-content: space-between;
 }
 
-.result {
-  color: #99999b;
-  font-weight: bold;
-  padding-bottom: 10px;
+.highlight {
+  color: lightgreen;
 }
 
 .button__run {
@@ -180,14 +208,5 @@ footer {
 .button__run:hover {
   opacity: 0.7;
   transition: 500ms;
-}
-
-.eval__result {
-  display: flex;
-  justify-content: space-between;
-}
-
-.highlight {
-  color: lightgreen;
 }
 </style>
