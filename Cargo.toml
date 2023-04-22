@@ -6,12 +6,13 @@ edition = "2021"
 [workspace]
 members=[
     "crates/rmonkey_ast",
-    "crates/rmonkey_evaluator",
-    "crates/rmonkey_object",
-    "crates/rmonkey_token",
     "crates/rmonkey_error",
+    "crates/rmonkey_evaluator",
+    "crates/rmonkey_fmt",
     "crates/rmonkey_lexer",
+    "crates/rmonkey_object",
     "crates/rmonkey_parser",
+    "crates/rmonkey_token",
     "crates/rmonkey_wasm",
 ]
 
