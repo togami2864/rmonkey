@@ -61,7 +61,7 @@ impl Formatter {
             Expr::Func { params, body } => self.fmt_func_literal(params, *body),
             Expr::Call { callee, args } => self.fmt_call_expr(*callee, args),
             Expr::Array { elements } => self.fmt_array_literal(elements),
-            Expr::IndexExpr { left, index } => self.fmt_index_expr_literal(left, index),
+            Expr::IndexExpr { left, index } => self.fmt_index_expr_literal(*left, *index),
             Expr::HashLiteral { pairs: _ } => todo!(),
         }
     }
@@ -140,9 +140,9 @@ impl Formatter {
         format!("[{}]", elems.join(", ").trim_end_matches(", "))
     }
 
-    fn fmt_index_expr_literal(&mut self, left: Box<Expr>, index: Box<Expr>) -> String {
-        let left = self.fmt_expr(*left, Precedence::Lowest);
-        let index = self.fmt_expr(*index, Precedence::Lowest);
+    fn fmt_index_expr_literal(&mut self, left: Expr, index: Expr) -> String {
+        let left = self.fmt_expr(left, Precedence::Lowest);
+        let index = self.fmt_expr(index, Precedence::Lowest);
         format!("{left}[{index}]")
     }
 

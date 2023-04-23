@@ -130,9 +130,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.container {
-  background-color: white;
-}
 .app {
   height: 100vh;
   width: 100vw;
@@ -148,7 +145,6 @@ header {
   background-color: #202227;
   grid-area: 1 / 1 / 2 / 6;
   display: flex;
-  justify-content: space-between;
   border-bottom: 10px solid #15171f;
 }
 .editor {
@@ -210,6 +206,7 @@ header {
   text-decoration: none;
   display: inline-block;
   cursor: pointer;
+  margin: 4px;
 }
 .button__run:hover {
   opacity: 0.7;
