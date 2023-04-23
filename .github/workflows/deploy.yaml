@@ -1,0 +1,64 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            playground/node_modules
+            playground/.pnpm-store
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Install pnpm
+        run: |
+          npm install -g pnpm@8.1.1
+
+      - name: Build Rust Wasm module
+        run: |
+          cargo build --release
+          cd ./crates
+          wasm-pack build
+
+      - name: Install dependencies
+        working-directory: playground
+        run: |
+          pnpm install --frozen-lockfile
+
+      - name: Build Nuxt app
+        working-directory: playground
+        env:
+          NUXT_ENV_TARGET_DIR: dist
+        run: |
+          pnpm run generate
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: playground/dist

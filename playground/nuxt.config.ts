@@ -10,5 +10,8 @@ export default defineNuxtConfig({
   },
   vite: {
     plugins: [wasm()],
+    build: {
+      target: 'esnext',
+    },
   },
 });
