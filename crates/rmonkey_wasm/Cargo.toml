@@ -16,6 +16,7 @@ serde_json = { version = "1.0.96", default-features = false, features = ["alloc"
 rmonkey_evaluator = {path = "../rmonkey_evaluator"}
 rmonkey_lexer = {path = "../rmonkey_lexer"}
 rmonkey_parser = {path = "../rmonkey_parser"}
+rmonkey_fmt = {path = "../rmonkey_fmt"}
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

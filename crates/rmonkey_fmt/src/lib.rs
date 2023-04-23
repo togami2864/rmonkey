@@ -7,13 +7,11 @@ use rmonkey_ast::{
 #[derive(Default)]
 pub struct Formatter {
     indent: usize,
-    column: usize,
 }
 
 impl Formatter {
     pub fn fmt(&mut self, ast: Program) -> String {
-        let formatted_code = self.fmt_block_stmt(ast.stmts);
-        formatted_code
+        self.fmt_block_stmt(ast.stmts)
     }
 
     fn fmt_stmt(&mut self, stmt: Stmt) -> String {
@@ -27,23 +25,27 @@ impl Formatter {
     fn fmt_block_stmt(&mut self, stmts: Vec<Stmt>) -> String {
         let mut formatted_code = String::new();
 
-        for (i, stmt) in stmts.into_iter().enumerate() {
-            formatted_code.push_str(&self.fmt_stmt(stmt).to_string());
+        for (_i, stmt) in stmts.into_iter().enumerate() {
+            let indent = self.indent * 2;
+            formatted_code.push_str(&format!(
+                "{}{}",
+                " ".repeat(indent),
+                &self.fmt_stmt(stmt).to_string()
+            ));
         }
         formatted_code
     }
     fn fmt_let_stmt(&mut self, name: Expr, value: Expr) -> String {
-        let name = self.fmt_ident_expr(name);
+        let name = self.fmt_expr(name, Precedence::Lowest);
         let result = format!("let {name} = ");
-        self.column += result.len();
 
         let expr = self.fmt_expr(value, Precedence::Lowest);
-        format!("{result}{expr};")
+        format!("{result}{expr};\n")
     }
 
     fn fmt_expr(&mut self, expr: Expr, precedence: Precedence) -> String {
         match expr {
-            Expr::Ident(_) => self.fmt_ident_expr(expr),
+            Expr::Ident(val) => self.fmt_ident_expr(val),
             Expr::IntLiteral(val) => self.fmt_int_literal(val),
             Expr::BoolLiteral(val) => self.fmt_bool_literal(val),
             Expr::StringLiteral(val) => self.fmt_string_literal(val),
@@ -60,17 +62,12 @@ impl Formatter {
             Expr::Call { callee, args } => self.fmt_call_expr(*callee, args),
             Expr::Array { elements } => self.fmt_array_literal(elements),
             Expr::IndexExpr { left, index } => self.fmt_index_expr_literal(left, index),
-            Expr::HashLiteral { pairs } => todo!(),
+            Expr::HashLiteral { pairs: _ } => todo!(),
         }
     }
 
-    fn fmt_ident_expr(&mut self, name: Expr) -> String {
-        if let Expr::Ident(ident) = name {
-            self.column += ident.len();
-            ident
-        } else {
-            unreachable!()
-        }
+    fn fmt_ident_expr(&mut self, name: String) -> String {
+        name
     }
 
     fn fmt_prefix_expr(&mut self, op: Prefix, right: Expr) -> String {
@@ -107,20 +104,15 @@ impl Formatter {
     }
 
     fn fmt_int_literal(&mut self, val: i64) -> String {
-        let res = val.to_string();
-        self.column += res.len();
-        res
+        val.to_string()
     }
 
     fn fmt_bool_literal(&mut self, val: bool) -> String {
-        let res = val.to_string();
-        self.column += res.len();
-        res
+        val.to_string()
     }
 
     fn fmt_string_literal(&mut self, val: String) -> String {
-        let res = val.to_string();
-        self.column += res.len();
+        let res = val;
         format!(r#""{res}""#)
     }
 
@@ -130,8 +122,14 @@ impl Formatter {
             .map(|p| self.fmt_expr(p.clone(), Precedence::Lowest))
             .collect::<Vec<String>>()
             .join(", ");
+        self.indent += 1;
         let body = self.fmt_stmt(body);
-        format!("fn({}) {{\n{body}\n}}", params.trim_end_matches(", "))
+        self.indent -= 1;
+        format!(
+            "fn({}) {{\n{body}\n{}}}",
+            params.trim_end_matches(", "),
+            " ".repeat(self.indent)
+        )
     }
 
     fn fmt_array_literal(&mut self, elements: Vec<Expr>) -> String {
@@ -158,15 +156,28 @@ impl Formatter {
     }
 
     fn fmt_if_expr(&mut self, cond: Expr, cons: Stmt, alt: Option<Box<Stmt>>) -> String {
+        self.indent += 1;
         let cond = self.fmt_expr(cond, Precedence::Lowest);
         let cons = self.fmt_stmt(cons);
-
         let res = if let Some(alt) = alt {
             let alt = self.fmt_stmt(*alt);
-            format!("if({cond}) {{\n{cons}\n}} else {{\n{alt}\n}}")
+            let indent = if self.indent % 2 == 0 {
+                self.indent
+            } else if self.indent == 1 {
+                0
+            } else {
+                self.indent + 1
+            };
+            format!(
+                "if({cond}) {{\n{cons}\n{}}} else {{\n{alt}\n{}}}",
+                " ".repeat(indent),
+                " ".repeat(indent)
+            )
         } else {
-            format!("if({cond}) {{\n{cons}\n}}")
+            let indent = if self.indent == 1 { 0 } else { self.indent * 2 };
+            format!("if({cond}) {{\n{cons}\n{}}}", " ".repeat(indent))
         };
+        self.indent -= 1;
         res
     }
 }
@@ -247,41 +258,46 @@ mod tests {
             (
                 "let identity=fn(x){x;}",
                 "let identity = fn(x) {
-x;
-};",
+  x;
+};
+",
             ),
             (
                 "let double = fn(x){x*2;};",
                 "let double = fn(x) {
-x * 2;
-};",
+  x * 2;
+};
+",
             ),
             (
                 "let add = fn(   x,     y){x+y;};",
                 "let add = fn(x, y) {
-x + y;
-};",
+  x + y;
+};
+",
             ),
             (
                 "let newAdder = fn(x){fn(y){x + y}};",
                 "let newAdder = fn(x) {
-fn(y) {
-x + y;
+  fn(y) {
+    x + y;
+ };
 };
-};",
+",
             ),
             ("let fibonacci = fn(x) {if (x == 0) {0;} else {if (x == 1) {1;}else {fibonacci(x - 1) + fibonacci(x - 2);}}};",
 "let fibonacci = fn(x) {
-  if (x == 0) {
+  if(x == 0) {
     0;
   } else {
-    if (x == 1) {
-        1;
+    if(x == 1) {
+      1;
     } else {
-fibonacci(x - 1) + fibonacci(x - 2);
-    }
-}
-};")
+      fibonacci(x - 1) + fibonacci(x - 2);
+    };
+  };
+};
+")
         ];
         for (input, expected) in input.into_iter() {
             let input = formatter(input);
@@ -295,21 +311,21 @@ fibonacci(x - 1) + fibonacci(x - 2);
             (
                 "if(true){10}",
                 "if(true) {
-10;
+  10;
 };",
             ),
             (
                 "if (false) { 10 }",
                 "if(false) {
-10;
+  10;
 };",
             ),
             (
                 "if (5 * 5 + 10 > 34) { 99 } else { 100 }",
                 "if(5 * 5 + 10 > 34) {
-99;
+  99;
 } else {
-100;
+  100;
 };",
             ),
         ];
@@ -333,7 +349,7 @@ fibonacci(x - 1) + fibonacci(x - 2);
         ];
 
         for (input, expected) in input.into_iter() {
-            let input = formatter(input);
+            let input = formatter(input).replace('\n', "");
             assert_eq!(input, expected);
         }
     }

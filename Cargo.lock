@@ -310,6 +310,7 @@ version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "rmonkey_evaluator",
+ "rmonkey_fmt",
  "rmonkey_lexer",
  "rmonkey_parser",
  "serde_json",

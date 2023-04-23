@@ -3,6 +3,7 @@ mod utils;
 use std::panic;
 
 use rmonkey_evaluator::Evaluator;
+use rmonkey_fmt::Formatter;
 use rmonkey_lexer::Lexer;
 use rmonkey_parser::Parser;
 use utils::set_panic_hook;
@@ -32,6 +33,19 @@ pub fn code_to_ast(code: &str) -> String {
             Err(err) => err.to_string(),
         },
         Err(err) => err,
+    }
+}
+
+#[wasm_bindgen]
+pub fn fmt(code: &str) -> Result<String, JsValue> {
+    set_panic_hook();
+    let mut formatter = Formatter::default();
+    let l = Lexer::new(code);
+    let mut p = Parser::new(l);
+    let program = p.parse_program().map_err(|e| format!("{e}"));
+    match program {
+        Ok(program) => Ok(formatter.fmt(program)),
+        Err(_) => Err(JsValue::from(code.to_string())),
     }
 }
 

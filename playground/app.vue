@@ -2,6 +2,7 @@
   <div class="app">
     <header>
       <button class="button__run" @click="evalRMonkeyCode(input)">▶ Run</button>
+      <button class="button__run" @click="formatRMonkey()">📝 Format</button>
     </header>
     <MonacoEditor
       v-model="input"
@@ -39,7 +40,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
-import { eval_rmonkey, code_to_ast } from 'rmonkey_wasm';
+import { eval_rmonkey, code_to_ast, fmt } from 'rmonkey_wasm';
 
 const commonEditorConfig = {
   minimap: { enabled: false },
@@ -47,16 +48,15 @@ const commonEditorConfig = {
 };
 
 const defaultMonkey = `let fibonacci = fn(x) {
-  if (x == 0) {
+  if(x == 0) {
     0;
   } else {
-    if (x == 1) {
+    if(x == 1) {
       1;
-    }
-    else {
+    } else {
       fibonacci(x - 1) + fibonacci(x - 2);
-    }
-  }
+    };
+  };
 };
 fibonacci(5);`;
 
@@ -102,6 +102,11 @@ function parse_code(input: string): string {
   return formattedJson;
 }
 
+function formatRMonkey() {
+  const formattedCode = fmt(input.value);
+  input.value = formattedCode;
+}
+
 function getCurrentTimeFormatted() {
   const currentTime = new Date();
   const hours = String(currentTime.getHours()).padStart(2, '0');
@@ -118,6 +123,7 @@ onMounted(() => {
       (navigator.userAgent.match('Mac') ? e.metaKey : e.ctrlKey)
     ) {
       e.preventDefault();
+      formatRMonkey();
     }
   });
 });
