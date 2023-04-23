@@ -39,10 +39,14 @@ jobs:
         run: |
           npm install -g pnpm@8.1.1
 
+      - name: Install wasm-pack
+        run: |
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
       - name: Build Rust Wasm module
         run: |
           cargo build --release
-          cd ./crates
+          cd ./crates/rmonkey_wasm
           wasm-pack build
 
       - name: Install dependencies
