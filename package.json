@@ -4,7 +4,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
-    "generate": "nuxt generate",
+    "generate": "nuxi generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "format": "prettier --write './**/*.{vue,js,ts}'"
