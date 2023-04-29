@@ -120,7 +120,11 @@ impl<'a> Lexer<'a> {
         self.read_char();
         let mut value = String::new();
         while self.cur != '"' {
-            value.push(self.read_char());
+            let ch = self.read_char();
+            if ch == '\u{0}' {
+                return Token::Illegal;
+            }
+            value.push(ch);
         }
         Token::String(value)
     }
@@ -391,6 +395,29 @@ mod tests {
             (Token::String("bar".to_owned()), "bar"),
             (Token::RBrace, "}"),
             (Token::Eof, "Eof"),
+        ];
+
+        let mut l = Lexer::new(input);
+        for (exp, exp_literal) in tests.iter() {
+            let token = l.next_token();
+            if token != *exp {
+                panic!(
+                    "assertion failed at {} => left: {}, right: {}",
+                    l.cur, token, exp
+                );
+            }
+            assert_eq!(token.to_string(), *exp_literal);
+        }
+    }
+
+    #[test]
+    fn test_illegal_unclosed_quote() {
+        let input = r#"let foo = ""#;
+        let tests = [
+            (Token::Let, "let"),
+            (Token::Ident("foo".to_owned()), "foo"),
+            (Token::Assign, "="),
+            (Token::Illegal, "Illegal"),
         ];
 
         let mut l = Lexer::new(input);
