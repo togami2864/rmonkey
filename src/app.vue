@@ -6,9 +6,9 @@
     </header>
     <MonacoEditor
       v-model="input"
-      @input="parse_input_code"
       class="editor"
       :options="{ ...commonEditorConfig }"
+      @input="parse_input_code"
     />
     <MonacoEditor
       v-model="ast"
@@ -85,8 +85,7 @@ function evalRMonkeyCode(value: string) {
 }
 
 function parse_input_code(e: Event) {
-  // @ts-ignore
-  const formattedJson = parse_code(e.target.value);
+  const formattedJson = parse_code(input.value);
   ast.value = formattedJson;
 }
 

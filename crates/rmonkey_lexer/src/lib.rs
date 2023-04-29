@@ -12,7 +12,7 @@ pub struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         let mut lexer = Lexer {
-            input: input.chars(),
+            input: input.trim().chars(),
             cur: '\u{0}',
             peek: '\u{0}',
         };
@@ -418,6 +418,89 @@ mod tests {
             (Token::Ident("foo".to_owned()), "foo"),
             (Token::Assign, "="),
             (Token::Illegal, "Illegal"),
+        ];
+
+        let mut l = Lexer::new(input);
+        for (exp, exp_literal) in tests.iter() {
+            let token = l.next_token();
+            if token != *exp {
+                panic!(
+                    "assertion failed at {} => left: {}, right: {}",
+                    l.cur, token, exp
+                );
+            }
+            assert_eq!(token.to_string(), *exp_literal);
+        }
+    }
+
+    #[test]
+    fn test_illegal() {
+        let input = r#"let fibonacci = fn(x) {
+  if(x == 0) {
+    0;
+  } else {
+    if(x == 1) {
+      1;
+    } else {
+      fibonacci(x - 1) + fibonacci(x - 2);
+    };
+  };
+};
+"#;
+        let tests = [
+            (Token::Let, "let"),
+            (Token::Ident("fibonacci".to_owned()), "fibonacci"),
+            (Token::Assign, "="),
+            (Token::Function, "fn"),
+            (Token::LParen, "("),
+            (Token::Ident("x".to_owned()), "x"),
+            (Token::RParen, ")"),
+            (Token::LBrace, "{"),
+            (Token::If, "if"),
+            (Token::LParen, "("),
+            (Token::Ident("x".to_owned()), "x"),
+            (Token::Eq, "=="),
+            (Token::Int(0), "0"),
+            (Token::RParen, ")"),
+            (Token::LBrace, "{"),
+            (Token::Int(0), "0"),
+            (Token::Semicolon, ";"),
+            (Token::RBrace, "}"),
+            (Token::Else, "else"),
+            (Token::LBrace, "{"),
+            (Token::If, "if"),
+            (Token::LParen, "("),
+            (Token::Ident("x".to_owned()), "x"),
+            (Token::Eq, "=="),
+            (Token::Int(1), "1"),
+            (Token::RParen, ")"),
+            (Token::LBrace, "{"),
+            (Token::Int(1), "1"),
+            (Token::Semicolon, ";"),
+            (Token::RBrace, "}"),
+            (Token::Else, "else"),
+            (Token::LBrace, "{"),
+            (Token::Ident("fibonacci".to_owned()), "fibonacci"),
+            (Token::LParen, "("),
+            (Token::Ident("x".to_owned()), "x"),
+            (Token::Minus, "-"),
+            (Token::Int(1), "1"),
+            (Token::RParen, ")"),
+            (Token::Plus, "+"),
+            (Token::Ident("fibonacci".to_owned()), "fibonacci"),
+            (Token::LParen, "("),
+            (Token::Ident("x".to_owned()), "x"),
+            (Token::Minus, "-"),
+            (Token::Int(2), "2"),
+            (Token::RParen, ")"),
+            (Token::Semicolon, ";"),
+            (Token::RBrace, "}"),
+            (Token::Semicolon, ";"),
+            (Token::RBrace, "}"),
+            (Token::Semicolon, ";"),
+            (Token::RBrace, "}"),
+            (Token::Semicolon, ";"),
+            (Token::Eof, "Eof"),
         ];
 
         let mut l = Lexer::new(input);
