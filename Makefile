@@ -1,10 +1,10 @@
 dev:
 	make build-wasm
-	cd playground && pnpm install && pnpm run dev
+	cd playground && pnpm install && pnpm dev
 
 build-web:
 	make build-wasm
-	cd playground && pnpm run build
+	pnpm build
 
 build-wasm:
 	cd crates/rmonkey_wasm && wasm-pack build

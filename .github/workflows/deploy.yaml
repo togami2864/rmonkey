@@ -5,20 +5,6 @@ on:
     branches:
       - main
 
-permissions:
-  actions: write
-  checks: write
-  contents: read
-  deployments: write
-  pages: write
-  id-token: write
-  issues: write
-  packages: write
-  pull-requests: write
-  repository-projects: write
-  security-events: write
-  statuses: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,6 +17,15 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 18
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        with:
+          # Automatically inject router.base in your Nuxt configuration file and set
+          # target to static (https://nuxtjs.org/docs/configuration-glossary/configuration-target/).
+          #
+          # You may remove this line if you want to manage the configuration yourself.
+          static_site_generator: nuxt
 
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
@@ -45,8 +40,8 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            playground/node_modules
-            playground/.pnpm-store
+            ~/node_modules
+            ~/.pnpm-store
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Install pnpm
@@ -64,12 +59,10 @@ jobs:
           wasm-pack build
 
       - name: Install dependencies
-        working-directory: playground
         run: |
           pnpm install --frozen-lockfile
 
       - name: Build Nuxt app
-        working-directory: playground
         env:
           NUXT_ENV_TARGET_DIR: dist
         run: |
@@ -78,16 +71,17 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          path: ./playground/dist
-
+          path: ./dist
   deploy:
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs:
-      - build
+    needs: build
     steps:
-      - name: deploy
-        uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.ref == 'refs/heads/main' }}
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./playground/dist
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
