@@ -1,37 +1,37 @@
 <template>
-  <div class="app">
+  <div class="App">
     <header>
-      <button class="button__run" @click="evalRMonkeyCode(input)">▶ Run</button>
-      <button class="button__run" @click="formatRMonkey()">📝 Format</button>
+      <button class="App__EvalCode" @click="evalRMonkeyCode(input)">▶ Run</button>
+      <button class="App__EvalCode" @click="formatRMonkey()">📝 Format</button>
     </header>
     <MonacoEditor
       v-model="input"
-      class="editor"
+      class="App__Editor"
       :options="{ ...commonEditorConfig }"
       @input="parse_input_code"
     />
     <MonacoEditor
       v-model="ast"
-      class="ast"
+      class="App_AstViewer"
       :options="{
         ...commonEditorConfig,
         readOnly: true,
       }"
     />
-    <div class="console">
-      <p class="logHeader">Result</p>
-      <div class="logDisplay">
+    <div class="App_Console">
+      <p class="App__LogHeader">Result</p>
+      <div class="App__LogDisplay">
         <p
           v-for="(execData, index) in execResults"
           :key="execData.currentTime"
           v-bind:class="index === 0 ? 'logText highlight' : 'logText'"
         >
+          <span>{{ execData.execData }}</span>
           <span>{{
             index === 0
-              ? `[✨${execData.currentTime}] ${execData.duration.toFixed(4)}ms`
+              ? `${execData.duration.toFixed(4)}ms [✨${execData.currentTime}]`
               : `[⌚${execData.currentTime}]`
           }}</span>
-          <span>{{ execData.execData }}</span>
         </p>
       </div>
     </div>
@@ -129,7 +129,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.app {
+.App {
   height: 100vh;
   width: 100vw;
   display: grid;
@@ -146,19 +146,19 @@ header {
   display: flex;
   border-bottom: 10px solid #15171f;
 }
-.editor {
+.App__Editor {
   grid-area: 2 / 1 / 5 / 2;
   border-bottom: 1px solid white;
   border-right: 1px solid white;
 }
-.ast {
+.App__AstViewer {
   background-color: #15171f;
   color: white;
   grid-area: 2 / 2 / 5 / 3;
   padding: 5px;
 }
 
-.console {
+.App_Console {
   padding: 20px 50px 30px 30px;
   background-color: #15171f;
   grid-area: 5 / 1 / 6 / 3;
@@ -168,7 +168,7 @@ header {
   border-top: 1px solid #464a54;
 }
 
-.logHeader {
+.App__LogHeader {
   color: #99999b;
   font-weight: bold;
   padding-bottom: 10px;
@@ -176,7 +176,7 @@ header {
   flex-direction: column;
 }
 
-.logDisplay {
+.App__LogDisplay {
   height: calc(100% - 40px);
   scrollbar-base-color: white;
   max-width: 100vw;
@@ -193,7 +193,7 @@ header {
   color: lightgreen;
 }
 
-.button__run {
+.App__EvalCode {
   background-color: white;
   color: black;
   padding: 10px 20px;
@@ -207,7 +207,7 @@ header {
   cursor: pointer;
   margin: 4px;
 }
-.button__run:hover {
+.App__EvalCode:hover {
   opacity: 0.7;
   transition: 500ms;
 }

@@ -1,3 +1,8 @@
+all:
+	pnpm install --frozen-lockfile
+	cargo build
+	make build-wasm
+	make build-web
 dev:
 	make build-wasm
 	cd playground && pnpm install && pnpm dev
