@@ -1,8 +1,15 @@
 <template>
   <div class="App">
     <header>
-      <button class="App__EvalCode" @click="evalRMonkeyCode(input)">▶ Run</button>
+      <button class="App__EvalCode" @click="evalRMonkeyCode(input)">
+        ▶ Run
+      </button>
       <button class="App__EvalCode" @click="formatRMonkey()">📝 Format</button>
+      <select v-model="input" class="App__Select">
+        <option v-for="(code, index) in codes" :value="code.value" :key="index">
+          {{ code.text }}
+        </option>
+      </select>
     </header>
     <MonacoEditor
       v-model="input"
@@ -12,7 +19,7 @@
     />
     <MonacoEditor
       v-model="ast"
-      class="App_AstViewer"
+      class="App__AstViewer"
       :options="{
         ...commonEditorConfig,
         readOnly: true,
@@ -41,6 +48,7 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
 import { eval_rmonkey, code_to_ast, fmt } from 'rmonkey_wasm';
+import { sampleCodes } from './codes';
 
 const commonEditorConfig = {
   minimap: { enabled: false },
@@ -60,6 +68,7 @@ const defaultMonkey = `let fibonacci = fn(x) {
 };
 fibonacci(5);`;
 
+const codes = reactive(sampleCodes);
 const input = ref<string>(defaultMonkey);
 const ast = ref<string>(parse_code(defaultMonkey));
 const execResults = reactive<
@@ -146,6 +155,22 @@ header {
   display: flex;
   border-bottom: 10px solid #15171f;
 }
+
+.App__Select {
+  background-color: white;
+  color: black;
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: solid 2px white;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  margin: 4px;
+}
+
 .App__Editor {
   grid-area: 2 / 1 / 5 / 2;
   border-bottom: 1px solid white;

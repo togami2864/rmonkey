@@ -56,7 +56,7 @@ jobs:
 
       - name: Install pnpm
         run: |
-          npm install -g pnpm@8.1.1
+          npm install -g pnpm@6.32.23
 
       - name: Install wasm-pack
         run: |
